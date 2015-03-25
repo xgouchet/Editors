@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root xmlns:bar="42">
+    <subTag/>
+    <tagWithNs xmlns:foo="815">
+        <foo:plop/>
+    </tagWithNs>
+</root>

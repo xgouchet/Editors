@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+    <attributed key="value"/>
+    <attributed_with_ns xmlns:foo="42" foo:key="spam"/>
+    <attributed_with_types />
+</root>

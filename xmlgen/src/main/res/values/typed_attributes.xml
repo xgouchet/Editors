@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="foo">bar</string>
+
+    // "px", "dp", "sp", "pt", "in", "mm"
+    <dimen name="size_px">25px</dimen>
+    <dimen name="size_dp">25dp</dimen>
+    <dimen name="size_sp">25sp</dimen>
+    <dimen name="size_pt">25pt</dimen>
+    <dimen name="size_in">25in</dimen>
+    <dimen name="size_mm">25mm</dimen>
+
+    // Color
+    <color name="color">#FF55C0FF</color>
+</resources>
