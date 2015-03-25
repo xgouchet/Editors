@@ -141,6 +141,38 @@ public class AXMLParserTest {
         verify(mMockListener).endElement(eq(""), eq("root"), eq("root"));
         verify(mMockListener).endDocument();
 
+        // TODO should parse typed attributes
+    }
+
+    @Test
+    public void shouldParseText() throws IOException {
+
+        doNothing().when(mMockListener).startDocument();
+        doNothing().when(mMockListener).startElement(anyString(), anyString(), anyString(), Matchers.<Attribute[]>any());
+        doNothing().when(mMockListener).text(anyString());
+        doNothing().when(mMockListener).endElement(anyString(), anyString(), anyString());
+        doNothing().when(mMockListener).endDocument();
+
+        // Select file
+        File file = new File("testres/axml/text.xml");
+        FileInputStream inputStream = new FileInputStream(file);
+        System.out.println(file.getPath());
+
+        mParser.parse(inputStream, mMockListener);
+
+        verify(mMockListener).startDocument();
+        verify(mMockListener).startElement(eq(""), eq("root"), eq("root"), aryEq(new Attribute[]{}));
+
+        verify(mMockListener).startElement(eq(""), eq("withtext"), eq("withtext"), aryEq(new Attribute[]{}));
+        verify(mMockListener).text(eq("Lorem ipsum dolor sit amet"));
+        verify(mMockListener).endElement(eq(""), eq("withtext"), eq("withtext"));
+
+        verify(mMockListener).startElement(eq(""), eq("withcdata"), eq("withcdata"), aryEq(new Attribute[]{}));
+        verify(mMockListener).text(eq("Plop"));
+        verify(mMockListener).endElement(eq(""), eq("withcdata"), eq("withcdata"));
+
+        verify(mMockListener).endElement(eq(""), eq("root"), eq("root"));
+        verify(mMockListener).endDocument();
 
     }
 

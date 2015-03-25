@@ -1,0 +1,4 @@
+<root>
+    <withtext>Lorem ipsum dolor sit amet</withtext>
+    <withcdata><![CDATA[Plop]]></withcdata>
+</root>

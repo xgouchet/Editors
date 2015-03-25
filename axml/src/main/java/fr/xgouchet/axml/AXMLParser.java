@@ -221,6 +221,9 @@ public class AXMLParser {
                 case WORD_END_TAG:
                     parseEndTag();
                     break;
+                case WORD_TEXT:
+                    parseText();
+                    break;
                 default:
                     moveBufferPositionByWords(1);
                     System.out.println(String.format("Unknown block id : 0x%x at position 0x%x", id, mBufferStartPosition));
@@ -421,6 +424,37 @@ public class AXMLParser {
         moveBufferPositionByWords(5);
 
         return new Attribute(name, value, prefix, uri);
+    }
+
+    /**
+     * A block will start with the following word :
+     * <ul>
+     * <li>0 : 0x00100104</li>
+     * <li>1 : block size</li>
+     * <li>2 : line number of this text in the original file</li>
+     * <li>3 : ??? (seems to always be 0xFFFFFFF)</li>
+     * <li>4 : string index in string table</li>
+     * <li>5 : ??? (seems to always be 0x8)</li>
+     * <li>6 : ??? (seems to always be 0x0)</li>
+     * </ul>
+     */
+    private void parseText() {
+
+        int blockSize = readWord(mBufferStartPosition, 1);
+        int lineNumber = readWord(mBufferStartPosition, 2);
+        int unknown3 = readWord(mBufferStartPosition, 3);
+        int textIndex = readWord(mBufferStartPosition, 4);
+        int unknown5 = readWord(mBufferStartPosition, 5);
+        int unknown6 = readWord(mBufferStartPosition, 6);
+
+        System.out.println(String.format("Unknown values in text block : 0x%x, 0x%x, 0x%x", unknown3, unknown5, unknown6));
+
+
+        String data = getString(textIndex);
+        mListener.text(data);
+
+
+        moveBufferPositionByWords(7);
     }
 
     /**

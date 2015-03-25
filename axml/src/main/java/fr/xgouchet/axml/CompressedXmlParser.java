@@ -149,6 +149,7 @@ public class CompressedXmlParser {
      * <li>1 : chunk size</li>
      * </ul>
      */
+    @Deprecated
     private void parseStartDocument() {
         mListener.startDocument();
         mParserOffset += (2 * WORD_SIZE);
@@ -166,6 +167,7 @@ public class CompressedXmlParser {
      * <li>6 : Offset to style data</li>
      * </ul>
      */
+    @Deprecated
     private void parseStringTable() {
 
         int chunk = getLEWord(mParserOffset + (1 * WORD_SIZE));
@@ -200,6 +202,7 @@ public class CompressedXmlParser {
      * <li>1 : chunk size</li>
      * </ul>
      */
+    @Deprecated
     private void parseResourceTable() {
         int chunk = getLEWord(mParserOffset + (1 * WORD_SIZE));
         mResCount = (chunk / 4) - 2;
@@ -223,6 +226,7 @@ public class CompressedXmlParser {
      * <li>5 : index of namespace uri in StringIndexTable</li>
      * </ul>
      */
+    @Deprecated
     private void parseNamespace(boolean start) {
         final int prefixIdx = getLEWord(mParserOffset + (4 * WORD_SIZE));
         final int uriIdx = getLEWord(mParserOffset + (5 * WORD_SIZE));
@@ -257,6 +261,7 @@ public class CompressedXmlParser {
      * <li>8 : ??? (0)</li>
      * </ul>
      */
+    @Deprecated
     private void parseStartTag() {
         // get tag info
         final int uriIdx = getLEWord(mParserOffset + (4 * WORD_SIZE));
@@ -303,6 +308,7 @@ public class CompressedXmlParser {
      * <li>4 : resource id value</li>
      * </ul>
      */
+    @Deprecated
     private Attribute parseAttribute() {
         final int attrNSIdx = getLEWord(mParserOffset);
         final int attrNameIdx = getLEWord(mParserOffset + (1 * WORD_SIZE));
@@ -369,6 +375,7 @@ public class CompressedXmlParser {
      * <li>5 : index of element name in StringIndexTable</li>
      * </ul>
      */
+    @Deprecated
     private void parseEndTag() {
         // get tag info
         final int uriIdx = getLEWord(mParserOffset + (4 * WORD_SIZE));
@@ -392,6 +399,7 @@ public class CompressedXmlParser {
      * @param index the index of the string in the StringIndexTable
      * @return the string
      */
+    @Deprecated
     private String getString(final int index) {
         String res;
         if ((index >= 0) && (index < mStringsCount)) {
@@ -408,6 +416,7 @@ public class CompressedXmlParser {
      *               (and not the whole data array)
      * @return the String
      */
+    @Deprecated
     private String getStringFromStringTable(final int offset) {
         int strLength;
         byte chars[];
@@ -436,6 +445,7 @@ public class CompressedXmlParser {
      * @return value of a Little Endian 32 bit word from the byte arrayat offset
      * off.
      */
+    @Deprecated
     private int getLEWord(final int off) {
         return ((mData[off + 3] << 24) & 0xff000000)
                 | ((mData[off + 2] << 16) & 0x00ff0000)
