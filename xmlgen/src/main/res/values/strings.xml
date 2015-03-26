@@ -1,4 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Xml Generator</string>
+    <item name="plop" type="id"/>
+
+    <declare-styleable name="toto">
+        <attr name="truc" format="boolean"/>
+    </declare-styleable>
+
+    <color name="vert_zwiffy">#00FFEE</color>
 </resources>

@@ -1,38 +1,25 @@
 package fr.xgouchet.axml;
 
-import android.net.LocalSocketAddress;
-
 import org.w3c.dom.Document;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.text.DecimalFormat;
 import java.util.HashMap;
 import java.util.Map;
 
 /**
  * The AXML Parser can parse a file or InputStream as a compressed Android XML file
  * <p/>
+ * <p/>
  * TODO add convert method (inputStream -> outputStream)
+ * TODO make the whole thing concurrent safe
  *
  * @author Xavier Gouchet
  */
 public class AXMLParser {
 
-    // equivalent to 2Ko ints
-    private static final int BUFFER_SIZE = 4 * 2048;
-
-    private InputStream mInputStream;
-    private Listener mListener;
-
-    private final byte[] mBuffer = new byte[BUFFER_SIZE];
-    private int mBufferStartPosition = BUFFER_SIZE;
-    private int mBufferEndPosition = BUFFER_SIZE;
-
-    private boolean mParsingComplete = false;
-    private boolean mEndOfStreamReached = false;
-
-
-    private static final int WORD_SIZE = 4;
+    public static final int WORD_SIZE = 4;
 
     public static final int WORD_START_DOCUMENT = 0x00080003;
 
@@ -48,8 +35,41 @@ public class AXMLParser {
     public static final int DEFAULT_NAMESPACE = 0xFFFFFFFF;
     public static final int ATTR_TYPED_VALUE = 0xFFFFFFFF;
 
+    public static final int TYPE_ID_REF = 0x01000008;
+    public static final int TYPE_ATTR_REF = 0x02000008;
+    public static final int TYPE_STRING = 0x03000008;
+    public static final int TYPE_FLOAT = 0x04000008;
+    public static final int TYPE_DIMEN = 0x05000008;
+    public static final int TYPE_PERCENT = 0x06000008;
+    public static final int TYPE_INT = 0x10000008;
+    public static final int TYPE_FLAGS = 0x11000008;
+    public static final int TYPE_BOOL = 0x12000008;
+    public static final int TYPE_COLOR_AARRGGBB = 0x1C000008;
+    public static final int TYPE_COLOR_RRGGBB = 0x1D000008;
+    public static final int TYPE_COLOR_ARGB = 0x1E000008;
+    public static final int TYPE_COLOR_RGB = 0x1F000008;
+
+    public static final String[] DIMENSION_UNIT = new String[]{"px", "dp", "sp", "pt", "in", "mm"};
+
+    // equivalent to 2Ko ints
+    private static final int BUFFER_SIZE = 4 * 2048;
+
+    private InputStream mInputStream;
+    private Listener mListener;
+
+    private final byte[] mBuffer = new byte[BUFFER_SIZE];
+    private int mBufferStartPosition = BUFFER_SIZE;
+    private int mBufferEndPosition = BUFFER_SIZE;
+
+    private boolean mParsingComplete = false;
+    private boolean mEndOfStreamReached = false;
+
+
     private int mStringsCount;
     private String[] mStringsTable;
+
+    private int mResourcesCount;
+    private int[] mResourcesTable;
 
     private Map<String, String> mNamespaces = new HashMap<>();
 
@@ -173,10 +193,12 @@ public class AXMLParser {
             throw new NullPointerException();
         }
 
+        resetInternalState();
+
         mListener = listener;
         mInputStream = inputStream;
 
-        parseLoop();
+        processBuffer();
 
         try {
             mInputStream.close();
@@ -186,10 +208,21 @@ public class AXMLParser {
 
     }
 
+    private void resetInternalState() {
+        mParsingComplete = false;
+        mEndOfStreamReached = false;
+        mBufferStartPosition = BUFFER_SIZE;
+        mBufferEndPosition = BUFFER_SIZE;
+        mStringsCount = 0;
+        mStringsTable = new String[]{};
+        mResourcesCount = 0;
+        mResourcesTable = new int[]{};
+    }
+
     /**
      * The parse loop will move block by block through the input stream
      */
-    private void parseLoop() throws IOException {
+    private void processBuffer() throws IOException {
 
         int id;
 
@@ -205,6 +238,9 @@ public class AXMLParser {
             switch (id) {
                 case WORD_START_DOCUMENT:
                     parseStartDocument();
+                    break;
+                case WORD_RES_TABLE:
+                    parseResourceTable();
                     break;
                 case WORD_STRING_TABLE:
                     parseStringTable();
@@ -254,13 +290,41 @@ public class AXMLParser {
     }
 
     /**
+     * The resource ids table starts with the following words :
+     * <ul>
+     * <li>0 : 0x00080180</li>
+     * <li>1 : block size (resource ids + these 2 first words)</li>
+     * </ul>
+     * The block is then followed by a list of resource ids
+     * <p>
+     * The resources are used by android to match attributes to framework values
+     * (or so it seems).
+     * </p>
+     */
+    private void parseResourceTable() {
+
+        int blockSize = readWord(mBufferStartPosition, 1);
+        mResourcesCount = (blockSize / WORD_SIZE) - 2; // remove the first 2 words (id, size)
+
+        moveBufferPositionByWords(2);
+
+        // read resources ids
+        mResourcesTable = new int[mResourcesCount];
+        for (int i = 0; i < mResourcesCount; ++i) {
+            mResourcesTable[i] = readWord(mBufferStartPosition, i);
+        }
+
+        moveBufferPositionByWords(mResourcesCount);
+    }
+
+    /**
      * A string table starts with the following words :
      * <ul>
      * <li>0 : 0x001C0001</li>
      * <li>1 : string table block size</li>
      * <li>2 : number of string in the string table</li>
      * <li>3 : number of styles in the string table</li>
-     * <li>4 : ???? (0)</li>
+     * <li>4 : ???? (0x00 / Ox100)</li>
      * <li>5 : Offset from the start of this block to String table data</li>
      * <li>6 : Offset to style data</li>
      * </ul>
@@ -378,6 +442,7 @@ public class AXMLParser {
         final Attribute[] attrs = new Attribute[attributesCount];
         for (int a = 0; a < attributesCount; a++) {
             attrs[a] = parseAttribute();
+            System.out.println(attrs[a].toString());
         }
 
         mListener.startElement(uri, localName, qualifiedName, attrs);
@@ -416,7 +481,7 @@ public class AXMLParser {
         // Read value
         String value;
         if (attrValueIndex == ATTR_TYPED_VALUE) {
-            value = ""; // TODO parse attribute types
+            value = getTypedAttributeValue(attrValueType, attrValueData);
         } else {
             value = getString(attrValueIndex);
         }
@@ -425,6 +490,136 @@ public class AXMLParser {
 
         return new Attribute(name, value, prefix, uri);
     }
+
+    /**
+     * @param type the type
+     * @param data the data word
+     * @return the typed value as a String (in most cases, identitcal to the way it appeared in the
+     * original xml)
+     */
+    private String getTypedAttributeValue(final int type, final int data) {
+        String value;
+
+        switch (type) {
+            case TYPE_ID_REF:
+                value = "@" + getIdReference(data);
+                break;
+            case TYPE_ATTR_REF:
+                value = "?" + getIdReference(data);
+                break;
+//            case TYPE_STRING:
+//                res = getString(data);
+//                break;
+            case TYPE_FLOAT:
+                // keep the same bits, read them as float
+                value = Float.toString(Float.intBitsToFloat(data));
+                break;
+            case TYPE_DIMEN:
+                int dimenUnit = data & 0xFF;
+                int dimenValue = data >> 8;
+                value = String.format("%d%s", dimenValue, DIMENSION_UNIT[dimenUnit]);
+                break;
+            case TYPE_PERCENT:
+                // multiple of 100%, [100% .. 838860000%]
+                if ((data & 0xFF) == 0) {
+                    int multiple = (data >> 8);
+                    value = String.format("%d00%%", multiple);
+                } else
+                    // [100.1%...25599.99%]
+                    if ((data & 0xFF) == 0x20) {
+                        double fracValue = (((double) (data >> 8)) / ((double) 0x7FFF));
+                        value = new DecimalFormat("#%").format(fracValue);
+                    } else
+                    // between -99% & 99%
+                    {
+                        double fracValue = (((double) data) / ((double) 0x7FFFFFFF));
+                        value = new DecimalFormat("#.##%").format(fracValue);
+                    }
+                System.out.println("Percentage : " + data + " -> " + value);
+                break;
+            case TYPE_INT:
+            case TYPE_FLAGS:
+                value = Integer.toString(data);
+                break;
+            case TYPE_BOOL:
+                value = (data == 0) ? "false" : "true";
+                break;
+            case TYPE_COLOR_AARRGGBB:
+                value = String.format("#%08X", data);
+                break;
+            case TYPE_COLOR_RRGGBB:
+                value = String.format("#%06X", (data & 0x00FFFFFF));
+                break;
+            case TYPE_COLOR_ARGB:
+                value = String.format(
+                        "#%X%X%X%X",
+                        (data >> 24) & 0xF,
+                        (data >> 16) & 0xF,
+                        (data >> 8) & 0xF,
+                        data & 0xF);
+                break;
+            case TYPE_COLOR_RGB:
+                value = String.format(
+                        "#%X%X%X",
+                        (data >> 16) & 0xF,
+                        (data >> 8) & 0xF,
+                        data & 0xF);
+                break;
+            default:
+                System.out.println(
+                        String.format("Attribute type unknown : 0x%x (data = 0x%X) @0x%x",
+                                type, data, mBufferStartPosition));
+                value = String.format("%08X/0x%08X", type, data);
+                break;
+        }
+
+        return value;
+    }
+
+
+    // @android:attr :      0x01010000 -> ...
+    // @android:id :        0x01020000 -> ...
+    // @android:style :     0x01030000 -> ...
+    // @android:string :    0x01040000 -> ...
+    // @android:dimen :     0x01050000 -> ...
+    // @android:color :     0x01060000 -> ...
+    // @android:array:      0x01070000 -> ...
+    // @android:drawable:   0x01080000 -> ...
+    // @android:layout:     0x01090000 -> ...
+    // @android:anim:       0x010A0000 -> ...
+    // @android:animator:   0x010B0000 -> ...
+    // @android:interp:     0x010C0000 -> ...
+    // @android:mipmap:     0x010D0000 -> ...
+    // @android:integer:    0x010E0000 -> ...
+    // @android:transition: 0x010F0000 -> ...
+
+    private static final String[] ANDROID_REF_TYPES = new String[]{
+            null, "attr", "id", "style", "string", "dimen", "color", "array", "drawable",
+            "layout", "anim", "animator", "interpolator", "mipmap", "integer", "transition"
+    };
+
+    private String getIdReference(int value) {
+        String prefix, type;
+
+        int typeIndex = (value & 0x00FF0000) >> 16;
+
+        // get prefix
+        if ((value >= 0x01010000) && (value < 0x01100000)) {
+            prefix = "android:";
+            if ((typeIndex > 0) && (typeIndex < ANDROID_REF_TYPES.length)) {
+                type = ANDROID_REF_TYPES[typeIndex];
+            } else {
+                type = "id";
+            }
+        } else {
+            prefix = "";
+            type = "id";
+        }
+
+
+        return String.format("%s%s/0x%08X", prefix, type, value);
+    }
+
 
     /**
      * A block will start with the following word :

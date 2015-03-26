@@ -109,4 +109,14 @@ public final class Attribute {
         result = 31 * result + mValue.hashCode();
         return result;
     }
+
+    @Override
+    public String toString() {
+
+        return "Attribute{"
+                + ((mPrefix == null) ? "" : mPrefix + ':')
+                + mName + "=\"" + mValue + "\""
+                + ((mNamespaceUri == null) ? "" : " [" + mNamespaceUri + "]")
+                + "}";
+    }
 }

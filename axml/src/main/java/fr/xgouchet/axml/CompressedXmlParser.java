@@ -30,18 +30,40 @@ public class CompressedXmlParser {
     public static final int WORD_EOS = 0xFFFFFFFF;
     public static final int WORD_SIZE = 4;
 
+
+
     private static final int TYPE_ID_REF = 0x01000008;
     private static final int TYPE_ATTR_REF = 0x02000008;
     private static final int TYPE_STRING = 0x03000008;
+    private static final int TYPE_FLOAT = 0x04000008;
     private static final int TYPE_DIMEN = 0x05000008;
     private static final int TYPE_FRACTION = 0x06000008;
-    private static final int TYPE_INT = 0x10000008;
-    private static final int TYPE_FLOAT = 0x04000008;
+    private static final int TYPE_U_7 = 0x07000008;
+    private static final int TYPE_U_8 = 0x08000008;
+    private static final int TYPE_U_9 = 0x09000008;
+    private static final int TYPE_U_A = 0x0A000008;
+    private static final int TYPE_U_B = 0x0B000008;
+    private static final int TYPE_U_C = 0x0C000008;
+    private static final int TYPE_U_D = 0x0D000008;
+    private static final int TYPE_U_E = 0x0E000008;
+    private static final int TYPE_U_F = 0x0F000008;
 
+    private static final int TYPE_INT = 0x10000008;
     private static final int TYPE_FLAGS = 0x11000008;
     private static final int TYPE_BOOL = 0x12000008;
+    private static final int TYPE_U_13 = 0x13000008;
+    private static final int TYPE_U_14 = 0x14000008;
+    private static final int TYPE_U_15 = 0x15000008;
+    private static final int TYPE_U_16 = 0x16000008;
+    private static final int TYPE_U_17 = 0x17000008;
+    private static final int TYPE_U_18 = 0x18000008;
+    private static final int TYPE_U_19 = 0x19000008;
+    private static final int TYPE_U_1A = 0x1A000008;
+    private static final int TYPE_U_1B = 0x1B000008;
     private static final int TYPE_COLOR = 0x1C000008;
     private static final int TYPE_COLOR2 = 0x1D000008;
+    private static final int TYPE_U_1E = 0x1E000008;
+    private static final int TYPE_U_1F = 0x1F000008;
 
     private static final String[] DIMEN = new String[]{"px", "dp", "sp", "pt", "in", "mm"};
 
@@ -96,6 +118,7 @@ public class CompressedXmlParser {
      * Each tag starts with a 32 bits word (different for start tag, end tag and
      * end doc)
      */
+    @Deprecated
     private void parseCompressedXml() {
         int word0;
 
@@ -104,27 +127,27 @@ public class CompressedXmlParser {
             word0 = getLEWord(mParserOffset);
 
             switch (word0) {
-                case WORD_START_DOCUMENT:
-                    parseStartDocument();
-                    break;
-                case WORD_STRING_TABLE:
-                    parseStringTable();
-                    break;
+//                case WORD_START_DOCUMENT:
+//                    parseStartDocument();
+//                    break;
+//                case WORD_STRING_TABLE:
+//                    parseStringTable();
+//                    break;
                 case WORD_RES_TABLE:
                     parseResourceTable();
                     break;
-                case WORD_START_NS:
-                    parseNamespace(true);
-                    break;
-                case WORD_END_NS:
-                    parseNamespace(false);
-                    break;
-                case WORD_START_TAG:
-                    parseStartTag();
-                    break;
-                case WORD_END_TAG:
-                    parseEndTag();
-                    break;
+//                case WORD_START_NS:
+//                    parseNamespace(true);
+//                    break;
+//                case WORD_END_NS:
+//                    parseNamespace(false);
+//                    break;
+//                case WORD_START_TAG:
+//                    parseStartTag();
+//                    break;
+//                case WORD_END_TAG:
+//                    parseEndTag();
+//                    break;
                 case WORD_TEXT:
                     parseText();
                     break;
@@ -151,8 +174,8 @@ public class CompressedXmlParser {
      */
     @Deprecated
     private void parseStartDocument() {
-        mListener.startDocument();
-        mParserOffset += (2 * WORD_SIZE);
+//        mListener.startDocument();
+//        mParserOffset += (2 * WORD_SIZE);
     }
 
     /**
@@ -169,30 +192,30 @@ public class CompressedXmlParser {
      */
     @Deprecated
     private void parseStringTable() {
-
-        int chunk = getLEWord(mParserOffset + (1 * WORD_SIZE));
-        mStringsCount = getLEWord(mParserOffset + (2 * WORD_SIZE));
-        mStylesCount = getLEWord(mParserOffset + (3 * WORD_SIZE));
-        int strOffset = mParserOffset
-                + getLEWord(mParserOffset + (5 * WORD_SIZE));
-        int styleOffset = getLEWord(mParserOffset + (6 * WORD_SIZE));
-
-        mStringsTable = new String[mStringsCount];
-        int offset;
-        for (int i = 0; i < mStringsCount; ++i) {
-            offset = strOffset
-                    + getLEWord(mParserOffset + ((i + 7) * WORD_SIZE));
-            mStringsTable[i] = getStringFromStringTable(offset);
-        }
-
-        if (styleOffset > 0) {
-            Log.w(TAG, "Unread styles");
-            for (int i = 0; i < mStylesCount; ++i) {
-                // TODO read the styles ???
-            }
-        }
-
-        mParserOffset += chunk;
+//
+//        int chunk = getLEWord(mParserOffset + (1 * WORD_SIZE));
+//        mStringsCount = getLEWord(mParserOffset + (2 * WORD_SIZE));
+//        mStylesCount = getLEWord(mParserOffset + (3 * WORD_SIZE));
+//        int strOffset = mParserOffset
+//                + getLEWord(mParserOffset + (5 * WORD_SIZE));
+//        int styleOffset = getLEWord(mParserOffset + (6 * WORD_SIZE));
+//
+//        mStringsTable = new String[mStringsCount];
+//        int offset;
+//        for (int i = 0; i < mStringsCount; ++i) {
+//            offset = strOffset
+//                    + getLEWord(mParserOffset + ((i + 7) * WORD_SIZE));
+//            mStringsTable[i] = getStringFromStringTable(offset);
+//        }
+//
+//        if (styleOffset > 0) {
+//            Log.w(TAG, "Unread styles");
+//            for (int i = 0; i < mStylesCount; ++i) {
+//                // TODO read the styles ???
+//            }
+//        }
+//
+//        mParserOffset += chunk;
     }
 
     /**
@@ -204,15 +227,15 @@ public class CompressedXmlParser {
      */
     @Deprecated
     private void parseResourceTable() {
-        int chunk = getLEWord(mParserOffset + (1 * WORD_SIZE));
-        mResCount = (chunk / 4) - 2;
-
-        mResourcesIds = new int[mResCount];
-        for (int i = 0; i < mResCount; ++i) {
-            mResourcesIds[i] = getLEWord(mParserOffset + ((i + 2) * WORD_SIZE));
-        }
-
-        mParserOffset += chunk;
+//        int chunk = getLEWord(mParserOffset + (1 * WORD_SIZE));
+//        mResCount = (chunk / 4) - 2;
+//
+//        mResourcesIds = new int[mResCount];
+//        for (int i = 0; i < mResCount; ++i) {
+//            mResourcesIds[i] = getLEWord(mParserOffset + ((i + 2) * WORD_SIZE));
+//        }
+//
+//        mParserOffset += chunk;
     }
 
     /**
@@ -228,22 +251,22 @@ public class CompressedXmlParser {
      */
     @Deprecated
     private void parseNamespace(boolean start) {
-        final int prefixIdx = getLEWord(mParserOffset + (4 * WORD_SIZE));
-        final int uriIdx = getLEWord(mParserOffset + (5 * WORD_SIZE));
-
-        final String uri = getString(uriIdx);
-        final String prefix = getString(prefixIdx);
-
-        if (start) {
-            mListener.startPrefixMapping(prefix, uri);
-            mNamespaces.put(uri, prefix);
-        } else {
-            mListener.endPrefixMapping(prefix, uri);
-            mNamespaces.remove(uri);
-        }
-
-        // Offset to first tag
-        mParserOffset += (6 * WORD_SIZE);
+//        final int prefixIdx = getLEWord(mParserOffset + (4 * WORD_SIZE));
+//        final int uriIdx = getLEWord(mParserOffset + (5 * WORD_SIZE));
+//
+//        final String uri = getString(uriIdx);
+//        final String prefix = getString(prefixIdx);
+//
+//        if (start) {
+//            mListener.startPrefixMapping(prefix, uri);
+//            mNamespaces.put(uri, prefix);
+//        } else {
+//            mListener.endPrefixMapping(prefix, uri);
+//            mNamespaces.remove(uri);
+//        }
+//
+//        // Offset to first tag
+//        mParserOffset += (6 * WORD_SIZE);
     }
 
     /**
@@ -263,37 +286,37 @@ public class CompressedXmlParser {
      */
     @Deprecated
     private void parseStartTag() {
-        // get tag info
-        final int uriIdx = getLEWord(mParserOffset + (4 * WORD_SIZE));
-        final int nameIdx = getLEWord(mParserOffset + (5 * WORD_SIZE));
-        final int attrCount = getLEWord(mParserOffset + (7 * WORD_SIZE));
-
-        final String name = getString(nameIdx);
-        String uri, qname;
-        if (uriIdx == 0xFFFFFFFF) {
-            uri = "";
-            qname = name;
-        } else {
-            uri = getString(uriIdx);
-            if (mNamespaces.containsKey(uri)) {
-                qname = mNamespaces.get(uri) + ':' + name;
-            } else {
-                qname = name;
-            }
-        }
-
-        // offset to start of attributes
-        mParserOffset += (9 * WORD_SIZE);
-
-        final Attribute[] attrs = new Attribute[attrCount];
-        for (int a = 0; a < attrCount; a++) {
-            attrs[a] = parseAttribute();
-
-            // offset to next attribute or tag
-            mParserOffset += (5 * 4);
-        }
-
-        mListener.startElement(uri, name, qname, attrs);
+//        // get tag info
+//        final int uriIdx = getLEWord(mParserOffset + (4 * WORD_SIZE));
+//        final int nameIdx = getLEWord(mParserOffset + (5 * WORD_SIZE));
+//        final int attrCount = getLEWord(mParserOffset + (7 * WORD_SIZE));
+//
+//        final String name = getString(nameIdx);
+//        String uri, qname;
+//        if (uriIdx == 0xFFFFFFFF) {
+//            uri = "";
+//            qname = name;
+//        } else {
+//            uri = getString(uriIdx);
+//            if (mNamespaces.containsKey(uri)) {
+//                qname = mNamespaces.get(uri) + ':' + name;
+//            } else {
+//                qname = name;
+//            }
+//        }
+//
+//        // offset to start of attributes
+//        mParserOffset += (9 * WORD_SIZE);
+//
+//        final Attribute[] attrs = new Attribute[attrCount];
+//        for (int a = 0; a < attrCount; a++) {
+//            attrs[a] = parseAttribute();
+//
+//            // offset to next attribute or tag
+//            mParserOffset += (5 * 4);
+//        }
+//
+//        mListener.startElement(uri, name, qname, attrs);
     }
 
     /**
@@ -310,34 +333,34 @@ public class CompressedXmlParser {
      */
     @Deprecated
     private Attribute parseAttribute() {
-        final int attrNSIdx = getLEWord(mParserOffset);
-        final int attrNameIdx = getLEWord(mParserOffset + (1 * WORD_SIZE));
-        final int attrValueIdx = getLEWord(mParserOffset + (2 * WORD_SIZE));
-        final int attrType = getLEWord(mParserOffset + (3 * WORD_SIZE));
-        final int attrData = getLEWord(mParserOffset + (4 * WORD_SIZE));
-
-        final Attribute attr = new Attribute();
-        attr.setName(getString(attrNameIdx));
-
-        if (attrNSIdx == 0xFFFFFFFF) {
-            attr.setNamespaceUri(null);
-            attr.setPrefix(null);
-        } else {
-            String uri = getString(attrNSIdx);
-            if (mNamespaces.containsKey(uri)) {
-                attr.setNamespaceUri(uri);
-                attr.setPrefix(mNamespaces.get(uri));
-            }
-        }
-
-        if (attrValueIdx == 0xFFFFFFFF) {
-            attr.setValue(getAttributeValue(attrType, attrData));
-        } else {
-            attr.setValue(getString(attrValueIdx));
-        }
-
-        return attr;
-
+//        final int attrNSIdx = getLEWord(mParserOffset);
+//        final int attrNameIdx = getLEWord(mParserOffset + (1 * WORD_SIZE));
+//        final int attrValueIdx = getLEWord(mParserOffset + (2 * WORD_SIZE));
+//        final int attrType = getLEWord(mParserOffset + (3 * WORD_SIZE));
+//        final int attrData = getLEWord(mParserOffset + (4 * WORD_SIZE));
+//
+//        final Attribute attr = new Attribute();
+//        attr.setName(getString(attrNameIdx));
+//
+//        if (attrNSIdx == 0xFFFFFFFF) {
+//            attr.setNamespaceUri(null);
+//            attr.setPrefix(null);
+//        } else {
+//            String uri = getString(attrNSIdx);
+//            if (mNamespaces.containsKey(uri)) {
+//                attr.setNamespaceUri(uri);
+//                attr.setPrefix(mNamespaces.get(uri));
+//            }
+//        }
+//
+//        if (attrValueIdx == 0xFFFFFFFF) {
+//            attr.setValue(getAttributeValue(attrType, attrData));
+//        } else {
+//            attr.setValue(getString(attrValueIdx));
+//        }
+//
+//        return attr;
+        return null;
     }
 
     /**
@@ -352,15 +375,16 @@ public class CompressedXmlParser {
      * <li>6 : ??? (always 0)</li>
      * </ul>
      */
+    @Deprecated
     private void parseText() {
-        // get tag infos
-        final int strIndex = getLEWord(mParserOffset + (4 * WORD_SIZE));
-
-        String data = getString(strIndex);
-        mListener.characterData(data);
-
-        // offset to next node
-        mParserOffset += (7 * WORD_SIZE);
+//        // get tag infos
+//        final int strIndex = getLEWord(mParserOffset + (4 * WORD_SIZE));
+//
+//        String data = getString(strIndex);
+//        mListener.characterData(data);
+//
+//        // offset to next node
+//        mParserOffset += (7 * WORD_SIZE);
     }
 
     /**
@@ -377,22 +401,22 @@ public class CompressedXmlParser {
      */
     @Deprecated
     private void parseEndTag() {
-        // get tag info
-        final int uriIdx = getLEWord(mParserOffset + (4 * WORD_SIZE));
-        final int nameIdx = getLEWord(mParserOffset + (5 * WORD_SIZE));
-
-        final String name = getString(nameIdx);
-        String uri;
-        if (uriIdx == 0xFFFFFFFF) {
-            uri = "";
-        } else {
-            uri = getString(uriIdx);
-        }
-
-        mListener.endElement(uri, name, null);
-
-        // offset to start of next tag
-        mParserOffset += (6 * WORD_SIZE);
+//        // get ta info
+//        final int uriIdx = getLEWord(mParserOffset + (4 * WORD_SIZE));
+//        final int nameIdx = getLEWord(mParserOffset + (5 * WORD_SIZE));
+//
+//        final String name = getString(nameIdx);
+//        String uri;
+//        if (uriIdx == 0xFFFFFFFF) {
+//            uri = "";
+//        } else {
+//            uri = getString(uriIdx);
+//        }
+//
+//        mListener.endElement(uri, name, null);
+//
+//        // offset to start of next tag
+//        mParserOffset += (6 * WORD_SIZE);
     }
 
     /**

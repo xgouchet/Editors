@@ -13,6 +13,7 @@ import java.io.InputStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.AdditionalMatchers.aryEq;
+import static org.mockito.Matchers.anyByte;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doNothing;
@@ -142,6 +143,96 @@ public class AXMLParserTest {
         verify(mMockListener).endDocument();
 
         // TODO should parse typed attributes
+    }
+
+    @Test
+    public void shouldParseTypedAttributes() throws IOException {
+
+        doNothing().when(mMockListener).startDocument();
+        doNothing().when(mMockListener).startElement(anyString(), anyString(), anyString(), Matchers.<Attribute[]>any());
+        doNothing().when(mMockListener).startPrefixMapping(anyString(), anyString());
+        doNothing().when(mMockListener).endPrefixMapping(anyString(), anyString());
+        doNothing().when(mMockListener).endElement(anyString(), anyString(), anyString());
+        doNothing().when(mMockListener).endDocument();
+
+        // Select file
+        File file = new File("testres/axml/typed_attrs.xml");
+        FileInputStream inputStream = new FileInputStream(file);
+        System.out.println(file.getPath());
+
+        mParser.parse(inputStream, mMockListener);
+
+
+        ArgumentCaptor<Attribute[]> attributesCaptor = ArgumentCaptor.forClass(Attribute[].class);
+
+        verify(mMockListener).startDocument();
+        verify(mMockListener).startPrefixMapping(eq("android"), eq("http://schemas.android.com/apk/res/android"));
+        verify(mMockListener).startElement(eq(""), eq("TextView"), eq("TextView"), attributesCaptor.capture());
+        verify(mMockListener).endElement(eq(""), eq("TextView"), eq("TextView"));
+        verify(mMockListener).endPrefixMapping(eq("android"), eq("http://schemas.android.com/apk/res/android"));
+        verify(mMockListener).endDocument();
+
+        // Check typed attributes
+        assertThat(attributesCaptor.getValue())
+                .contains(new Attribute("paddingLeft", "4px", "android", "http://schemas.android.com/apk/res/android"))
+                .contains(new Attribute("paddingTop", "8dp", "android", "http://schemas.android.com/apk/res/android"))
+                .contains(new Attribute("paddingRight", "15pt", "android", "http://schemas.android.com/apk/res/android"))
+                .contains(new Attribute("paddingBottom", "16mm", "android", "http://schemas.android.com/apk/res/android"))
+                .contains(new Attribute("layout_height", "2in", "android", "http://schemas.android.com/apk/res/android"))
+                .contains(new Attribute("textSize", "42sp", "android", "http://schemas.android.com/apk/res/android"))
+                .contains(new Attribute("text", "@android:string/0x01040003", "android", "http://schemas.android.com/apk/res/android"))
+                .contains(new Attribute("lines", "7", "android", "http://schemas.android.com/apk/res/android"))
+                .contains(new Attribute("enabled", "true", "android", "http://schemas.android.com/apk/res/android"))
+                .contains(new Attribute("drawableTop", "?android:attr/0x0101039D", "android", "http://schemas.android.com/apk/res/android"))
+                .contains(new Attribute("id", "@id/0x7F060001", "android", "http://schemas.android.com/apk/res/android"))
+                .contains(new Attribute("background", "@android:drawable/0x010800B2", "android", "http://schemas.android.com/apk/res/android"))
+                .contains(new Attribute("layout_width", "-1", "android", "http://schemas.android.com/apk/res/android"))
+                .contains(new Attribute("gravity", "17", "android", "http://schemas.android.com/apk/res/android"))
+                .contains(new Attribute("alpha", "0.37", "android", "http://schemas.android.com/apk/res/android"))
+                .contains(new Attribute("textColor", "#4488FF", "android", "http://schemas.android.com/apk/res/android"))
+                .contains(new Attribute("textColorHint", "#80FF00FF", "android", "http://schemas.android.com/apk/res/android"))
+                .contains(new Attribute("textColorLink", "#4673", "android", "http://schemas.android.com/apk/res/android"))
+                .contains(new Attribute("shadowColor", "#632", "android", "http://schemas.android.com/apk/res/android"));
+
+    }
+
+
+    @Test
+    public void shouldParseFractionAttributes() throws IOException {
+
+        doNothing().when(mMockListener).startDocument();
+        doNothing().when(mMockListener).startElement(anyString(), anyString(), anyString(), Matchers.<Attribute[]>any());
+        doNothing().when(mMockListener).startPrefixMapping(anyString(), anyString());
+        doNothing().when(mMockListener).endPrefixMapping(anyString(), anyString());
+        doNothing().when(mMockListener).endElement(anyString(), anyString(), anyString());
+        doNothing().when(mMockListener).endDocument();
+
+        // Select file
+        File file = new File("testres/axml/typed_attrs_2.xml");
+        FileInputStream inputStream = new FileInputStream(file);
+        System.out.println(file.getPath());
+
+        mParser.parse(inputStream, mMockListener);
+
+
+        ArgumentCaptor<Attribute[]> attributesCaptor = ArgumentCaptor.forClass(Attribute[].class);
+
+        verify(mMockListener).startDocument();
+        verify(mMockListener).startPrefixMapping(eq("android"), eq("http://schemas.android.com/apk/res/android"));
+        verify(mMockListener).startElement(eq(""), eq("set"), eq("set"), Matchers.<Attribute[]>any());
+        verify(mMockListener).startElement(eq(""), eq("translate"), eq("translate"), attributesCaptor.capture());
+        verify(mMockListener).endElement(eq(""), eq("translate"), eq("translate"));
+        verify(mMockListener).endElement(eq(""), eq("set"), eq("set"));
+        verify(mMockListener).endPrefixMapping(eq("android"), eq("http://schemas.android.com/apk/res/android"));
+        verify(mMockListener).endDocument();
+
+        // Check typed attributes
+        assertThat(attributesCaptor.getValue())
+                .contains(new Attribute("fromXDelta", "42%", "android", "http://schemas.android.com/apk/res/android"))
+                .contains(new Attribute("toXDelta", "-666%", "android", "http://schemas.android.com/apk/res/android"))
+                .contains(new Attribute("fromYDelta", "300%", "android", "http://schemas.android.com/apk/res/android"))
+                .contains(new Attribute("toYDelta", "-1000%", "android", "http://schemas.android.com/apk/res/android"));
+
     }
 
     @Test
