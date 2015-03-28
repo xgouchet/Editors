@@ -267,4 +267,68 @@ public class AXMLParserTest {
 
     }
 
+
+    @Test
+    public void shouldParseTextUTF16() throws IOException {
+
+        doNothing().when(mMockListener).startDocument();
+        doNothing().when(mMockListener).startElement(anyString(), anyString(), anyString(), Matchers.<Attribute[]>any());
+        doNothing().when(mMockListener).text(anyString());
+        doNothing().when(mMockListener).endElement(anyString(), anyString(), anyString());
+        doNothing().when(mMockListener).endDocument();
+
+        // Select file
+        File file = new File("testres/axml/encoding_utf16_LE.xml");
+        FileInputStream inputStream = new FileInputStream(file);
+        System.out.println(file.getPath());
+
+        mParser.parse(inputStream, mMockListener);
+
+        ArgumentCaptor<Attribute[]> attributesCaptor = ArgumentCaptor.forClass(Attribute[].class);
+        verify(mMockListener).startDocument();
+        verify(mMockListener).startPrefixMapping(eq("android"), eq("http://schemas.android.com/apk/res/android"));
+        verify(mMockListener).startElement(eq(""), eq("shape"), eq("shape"), aryEq(new Attribute[]{}));
+
+        verify(mMockListener).startElement(eq(""), eq("solid"), eq("solid"), attributesCaptor.capture());
+        verify(mMockListener).endElement(eq(""), eq("solid"), eq("solid"));
+
+        verify(mMockListener).endElement(eq(""), eq("shape"), eq("shape"));
+        verify(mMockListener).endPrefixMapping(eq("android"), eq("http://schemas.android.com/apk/res/android"));
+        verify(mMockListener).endDocument();
+
+        // Check typed attributes
+        assertThat(attributesCaptor.getValue())
+                .contains(new Attribute("color", "#4030B0E0", "android", "http://schemas.android.com/apk/res/android"));
+
+    }
+
+
+    @Test
+    public void shouldParseTextUTF8VaryingCharLength() throws IOException {
+
+        doNothing().when(mMockListener).startDocument();
+        doNothing().when(mMockListener).startElement(anyString(), anyString(), anyString(), Matchers.<Attribute[]>any());
+        doNothing().when(mMockListener).text(anyString());
+        doNothing().when(mMockListener).endElement(anyString(), anyString(), anyString());
+        doNothing().when(mMockListener).endDocument();
+
+        // Select file
+        File file = new File("testres/axml/encoding_utf8_varying.xml");
+        FileInputStream inputStream = new FileInputStream(file);
+        System.out.println(file.getPath());
+
+        mParser.parse(inputStream, mMockListener);
+
+        verify(mMockListener).startDocument();
+        verify(mMockListener).startElement(eq(""), eq("root"), eq("root"), aryEq(new Attribute[]{}));
+
+        verify(mMockListener).startElement(eq(""), eq("uni"), eq("uni"), aryEq(new Attribute[]{}));
+        verify(mMockListener).text(eq("▲é#ààç€¢æð»"));
+        verify(mMockListener).endElement(eq(""), eq("uni"), eq("uni"));
+
+        verify(mMockListener).endElement(eq(""), eq("root"), eq("root"));
+        verify(mMockListener).endDocument();
+
+    }
+
 }

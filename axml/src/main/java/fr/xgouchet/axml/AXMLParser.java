@@ -1,9 +1,13 @@
 package fr.xgouchet.axml;
 
+import android.util.Xml;
+
 import org.w3c.dom.Document;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
+import java.nio.charset.Charset;
 import java.text.DecimalFormat;
 import java.util.HashMap;
 import java.util.Map;
@@ -48,6 +52,9 @@ public class AXMLParser {
     public static final int TYPE_COLOR_RRGGBB = 0x1D000008;
     public static final int TYPE_COLOR_ARGB = 0x1E000008;
     public static final int TYPE_COLOR_RGB = 0x1F000008;
+
+    public static final int ENCODING_UTF8 = 0X00000100;
+    public static final int ENCODING_UTF16_LE = 0X00000000;
 
     public static final String[] DIMENSION_UNIT = new String[]{"px", "dp", "sp", "pt", "in", "mm"};
 
@@ -262,7 +269,7 @@ public class AXMLParser {
                     break;
                 default:
                     moveBufferPositionByWords(1);
-                    System.out.println(String.format("Unknown block id : 0x%x at position 0x%x", id, mBufferStartPosition));
+                    System.err.println(String.format("Unknown block id : 0x%x at position 0x%x", id, mBufferStartPosition));
                     break;
             }
 
@@ -324,7 +331,7 @@ public class AXMLParser {
      * <li>1 : string table block size</li>
      * <li>2 : number of string in the string table</li>
      * <li>3 : number of styles in the string table</li>
-     * <li>4 : ???? (0x00 / Ox100)</li>
+     * <li>4 : encoding (0x00 = UTF-16 Little Endian / Ox100 = UTF-8)</li>
      * <li>5 : Offset from the start of this block to String table data</li>
      * <li>6 : Offset to style data</li>
      * </ul>
@@ -336,11 +343,9 @@ public class AXMLParser {
         int blockSize = readWord(mBufferStartPosition, 1);
         mStringsCount = readWord(mBufferStartPosition, 2);
         mStylesCount = readWord(mBufferStartPosition, 3);
-        int unknown = readWord(mBufferStartPosition, 4);
+        int encoding = readWord(mBufferStartPosition, 4);
         int stringTableOffset = mBufferStartPosition + readWord(mBufferStartPosition, 5);
         int styleOffset = readWord(mBufferStartPosition, 6);
-
-        System.out.println(String.format("Unknown value in String table : 0x%x", unknown));
 
         // read Strings table
         mStringsTable = new String[mStringsCount];
@@ -349,7 +354,8 @@ public class AXMLParser {
         int offset;
         for (int i = 0; i < mStringsCount; ++i) {
             offset = stringTableOffset + readWord(mBufferStartPosition, i + 7);
-            mStringsTable[i] = readString(offset);
+            mStringsTable[i] = readString(offset, encoding);
+            System.out.println("STRING : " + mStringsTable[i]);
         }
 
         // TODO read the styles ???
@@ -438,7 +444,7 @@ public class AXMLParser {
         // offset to start of attributes
         moveBufferPositionByWords(9);
 
-        // TODO read start tag attributes
+        // read attributes
         final Attribute[] attrs = new Attribute[attributesCount];
         for (int a = 0; a < attributesCount; a++) {
             attrs[a] = parseAttribute();
@@ -507,7 +513,8 @@ public class AXMLParser {
             case TYPE_ATTR_REF:
                 value = "?" + getIdReference(data);
                 break;
-//            case TYPE_STRING:
+
+//          TODO  case TYPE_STRING:
 //                res = getString(data);
 //                break;
             case TYPE_FLOAT:
@@ -576,23 +583,8 @@ public class AXMLParser {
         return value;
     }
 
-
-    // @android:attr :      0x01010000 -> ...
-    // @android:id :        0x01020000 -> ...
-    // @android:style :     0x01030000 -> ...
-    // @android:string :    0x01040000 -> ...
-    // @android:dimen :     0x01050000 -> ...
-    // @android:color :     0x01060000 -> ...
-    // @android:array:      0x01070000 -> ...
-    // @android:drawable:   0x01080000 -> ...
-    // @android:layout:     0x01090000 -> ...
-    // @android:anim:       0x010A0000 -> ...
-    // @android:animator:   0x010B0000 -> ...
-    // @android:interp:     0x010C0000 -> ...
-    // @android:mipmap:     0x010D0000 -> ...
-    // @android:integer:    0x010E0000 -> ...
-    // @android:transition: 0x010F0000 -> ...
-
+    // In the android.R class, this is the order the ids are set... apparently
+    // TODO test those values with files compiled for older versions of Android...
     private static final String[] ANDROID_REF_TYPES = new String[]{
             null, "attr", "id", "style", "string", "dimen", "color", "array", "drawable",
             "layout", "anim", "animator", "interpolator", "mipmap", "integer", "transition"
@@ -716,30 +708,46 @@ public class AXMLParser {
      *               data array)
      * @return the String
      */
-    private String readString(final int offset) {
-        int strLength;
-        byte chars[];
+    private String readString(final int offset, final int encoding) {
+        int bytesCount, charOffset, charsCount;
+        byte data[];
+        String charsetName, result;
 
         // Each string is prefix by 2 bytes indicating the length of the string
+        charOffset = offset + 2;
 
-        // single byte characters
-        if (mBuffer[offset + 1] == mBuffer[offset]) {
-            strLength = mBuffer[offset];
-            chars = new byte[strLength];
-            for (int i = 0; i < strLength; i++) {
-                chars[i] = mBuffer[offset + 2 + i];
-            }
-        } else {
-            // two byte characters
-            strLength = ((mBuffer[offset + 1] << 8) & 0xFF00) | (mBuffer[offset] & 0xFF);
-            chars = new byte[strLength];
-            for (int i = 0; i < strLength; i++) {
-                // TODO this seams strange, test with weird unicode characters (UTF8-16-32?)
-                chars[i] = mBuffer[offset + 2 + (i * 2)];
-            }
-
+        switch (encoding) {
+            case ENCODING_UTF8:
+                charsCount = mBuffer[offset];
+                bytesCount = mBuffer[offset + 1];
+                data = new byte[bytesCount];
+                charsetName = "UTF-8";
+                break;
+            case ENCODING_UTF16_LE:
+                charsCount = ((mBuffer[offset + 1] << 8) & 0xFF00) | (mBuffer[offset] & 0xFF);
+                bytesCount = charsCount * 2;
+                data = new byte[bytesCount];
+                charsetName = "UTF-16LE";
+                break;
+            default:
+                System.err.println(String.format("Unsupporting chars type %x", encoding));
+                return "";
         }
-        return new String(chars);
+
+        // copy the string bytes
+        System.arraycopy(mBuffer, charOffset, data, 0, bytesCount);
+
+        // Convert to string
+        try {
+            result = new String(data, charsetName);
+            if (result.length() != charsCount){
+                System.err.println("Decoding seems off, expecting " + charsCount + " characters, final String has " + result.length());
+            }
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+            result = "";
+        }
+        return result;
     }
 
     private void moveBufferPositionByWords(int wordCount) {
