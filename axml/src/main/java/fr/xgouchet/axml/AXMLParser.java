@@ -1,13 +1,10 @@
 package fr.xgouchet.axml;
 
-import android.util.Xml;
-
 import org.w3c.dom.Document;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UnsupportedEncodingException;
-import java.nio.charset.Charset;
 import java.text.DecimalFormat;
 import java.util.HashMap;
 import java.util.Map;
@@ -82,6 +79,11 @@ public class AXMLParser {
 
     private int mStylesCount;
 
+    // TODO perform some checks on these two, because maybe we can have some data appended after the document,
+    // or the document can be truncated
+    private int mReadBytes;
+    private int mDocSize;
+
 
     /**
      * A SAX like listener. Events will be triggered whenever
@@ -119,33 +121,24 @@ public class AXMLParser {
 
         /**
          * Receive notification of the beginning of an element.
-         *
-         * @param uri       the Namespace URI, or the empty string if the element has no
-         *                  Namespace URI or if Namespace processing is not being
-         *                  performed
-         * @param localName the local name (without prefix), or the empty string if
-         *                  Namespace processing is not being performed
-         * @param qName     the qualified name (with prefix), or the empty string if
-         *                  qualified names are not available
-         * @param atts      the attributes attached to the element. If there are no
-         *                  attributes, it shall be an empty Attributes object. The value
-         *                  of this object after startElement returns is undefined
+         *  @param localName  the local name of the element (without prefix)
+         * @param attributes the attributes attached to the element. If there are no
+         *                   attributes, it shall be an empty Attributes object.
+         * @param uri        the Namespace URI, or null if the element has no Namespace
+         * @param prefix     the Namespace prefix, or null if the element has no Namespace
          */
-        void startElement(String uri, String localName, String qName,
-                          Attribute[] atts);
+        void startElement(String localName, Attribute[] attributes, String uri, String prefix);
 
         /**
          * Receive notification of the end of an element.
-         *
-         * @param uri       the Namespace URI, or the empty string if the element has no
-         *                  Namespace URI or if Namespace processing is not being
-         *                  performed
-         * @param localName the local name (without prefix), or the empty string if
-         *                  Namespace processing is not being performed
-         * @param qName     the qualified XML name (with prefix), or the empty string if
-         *                  qualified names are not available
+         *  @param localName     the local name (without prefix), or the empty string if
+         *                      Namespace processing is not being performed
+         * @param uri           the Namespace URI, or the empty string if the element has no
+         *                      Namespace URI or if Namespace processing is not being
+         *                      performed
+         * @param prefix the qualified XML name (with prefix), or the empty string if
          */
-        void endElement(String uri, String localName, String qName);
+        void endElement(String localName, String uri, String prefix);
 
         /**
          * Receive notification of text.
@@ -153,24 +146,6 @@ public class AXMLParser {
          * @param data the text data
          */
         void text(String data);
-
-        /**
-         * Receive notification of character data (in a <![CDATA[ ]]> block).
-         *
-         * @param data the text data
-         */
-        void characterData(String data);
-
-        /**
-         * Receive notification of a processing instruction.
-         *
-         * @param target the processing instruction target
-         * @param data   the processing instruction data, or null if none was supplied.
-         *               The data does not include any whitespace separating it from
-         *               the target
-         * @throws org.xml.sax.SAXException any SAX exception, possibly wrapping another exception
-         */
-        void processingInstruction(String target, String data);
     }
 
     /**
@@ -291,7 +266,7 @@ public class AXMLParser {
      */
     private void parseStartDocument() {
         mListener.startDocument();
-        int docSize = readWord(mBufferStartPosition, 1);
+        mDocSize = readWord(mBufferStartPosition, 1);
 
         moveBufferPositionByWords(2);
     }
@@ -355,7 +330,6 @@ public class AXMLParser {
         for (int i = 0; i < mStringsCount; ++i) {
             offset = stringTableOffset + readWord(mBufferStartPosition, i + 7);
             mStringsTable[i] = readString(offset, encoding);
-            System.out.println("STRING : " + mStringsTable[i]);
         }
 
         // TODO read the styles ???
@@ -382,7 +356,7 @@ public class AXMLParser {
         int namespacePrefixIndex = readWord(mBufferStartPosition, 4);
         int namespaceUriIndex = readWord(mBufferStartPosition, 5);
 
-        System.out.println(String.format("Unknown value in namespace block : 0x%x", unknown3));
+//        System.out.println(String.format("Unknown value in namespace block : 0x%x", unknown3));
 
         final String namespacePrefix = getString(namespacePrefixIndex);
         final String namespaceUri = getString(namespaceUriIndex);
@@ -410,7 +384,7 @@ public class AXMLParser {
      * <li>5 : index of element name in String Table</li>
      * <li>6 : ???</li>
      * <li>7 : number of attributes following the start tag block</li>
-     * <li>8 : ??? (seems to always be 0x0)</li>
+     * <li>8 : ??? (seems to be linked with the number of attributes... but only for layout items with style ?!)</li>
      * </ul>
      */
     private void parseStartTag() {
@@ -424,20 +398,21 @@ public class AXMLParser {
         int attributesCount = readWord(mBufferStartPosition, 7);
         int unknown8 = readWord(mBufferStartPosition, 8);
 
-        System.out.println(String.format("Unknown values in start tag block : 0x%x, 0x%x, 0x%x", unknown3, unknown6, unknown8));
+//        System.out.println(String.format("Unknown values in start tag block : 0x%x, 0x%x, 0x%x", unknown3, unknown6, unknown8));
 
 
         String localName = getString(tagNameIndex);
-        String uri, qualifiedName;
+        String uri, prefix;
         if (namespaceUriIndex == DEFAULT_NAMESPACE) {
-            uri = "";
-            qualifiedName = localName;
+            uri = null;
+            prefix = null;
         } else {
             uri = getString(namespaceUriIndex);
             if (mNamespaces.containsKey(uri)) {
-                qualifiedName = mNamespaces.get(uri) + ':' + localName;
+                prefix = mNamespaces.get(uri);
             } else {
-                qualifiedName = localName;
+                uri = null;
+                prefix = null;
             }
         }
 
@@ -448,10 +423,9 @@ public class AXMLParser {
         final Attribute[] attrs = new Attribute[attributesCount];
         for (int a = 0; a < attributesCount; a++) {
             attrs[a] = parseAttribute();
-            System.out.println(attrs[a].toString());
         }
 
-        mListener.startElement(uri, localName, qualifiedName, attrs);
+        mListener.startElement(localName, attrs, uri, prefix);
     }
 
     /**
@@ -494,7 +468,7 @@ public class AXMLParser {
 
         moveBufferPositionByWords(5);
 
-        return new Attribute(name, value, prefix, uri);
+        return new Attribute(name, value, uri, prefix);
     }
 
     /**
@@ -542,7 +516,6 @@ public class AXMLParser {
                         double fracValue = (((double) data) / ((double) 0x7FFFFFFF));
                         value = new DecimalFormat("#.##%").format(fracValue);
                     }
-                System.out.println("Percentage : " + data + " -> " + value);
                 break;
             case TYPE_INT:
             case TYPE_FLAGS:
@@ -573,7 +546,7 @@ public class AXMLParser {
                         data & 0xF);
                 break;
             default:
-                System.out.println(
+                System.err.println(
                         String.format("Attribute type unknown : 0x%x (data = 0x%X) @0x%x",
                                 type, data, mBufferStartPosition));
                 value = String.format("%08X/0x%08X", type, data);
@@ -663,24 +636,25 @@ public class AXMLParser {
         int namespaceUriIndex = readWord(mBufferStartPosition, 4);
         int tagNameIndex = readWord(mBufferStartPosition, 5);
 
-        System.out.println(String.format("Unknown value in end tag block : 0x%x", unknown3));
+//        System.out.println(String.format("Unknown value in end tag block : 0x%x", unknown3));
 
 
         String localName = getString(tagNameIndex);
-        String uri, qualifiedName;
+        String uri, prefix;
         if (namespaceUriIndex == DEFAULT_NAMESPACE) {
-            uri = "";
-            qualifiedName = localName;
+            uri = null;
+            prefix = null;
         } else {
             uri = getString(namespaceUriIndex);
             if (mNamespaces.containsKey(uri)) {
-                qualifiedName = mNamespaces.get(uri) + ':' + localName;
+                prefix = mNamespaces.get(uri) ;
             } else {
-                qualifiedName = localName;
+                uri = null;
+                prefix = null;
             }
         }
 
-        mListener.endElement(uri, localName, qualifiedName);
+        mListener.endElement(localName, uri, prefix);
 
         moveBufferPositionByWords(6);
     }
@@ -740,7 +714,7 @@ public class AXMLParser {
         // Convert to string
         try {
             result = new String(data, charsetName);
-            if (result.length() != charsCount){
+            if (result.length() != charsCount) {
                 System.err.println("Decoding seems off, expecting " + charsCount + " characters, final String has " + result.length());
             }
         } catch (UnsupportedEncodingException e) {

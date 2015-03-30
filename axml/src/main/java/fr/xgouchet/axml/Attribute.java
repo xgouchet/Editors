@@ -13,15 +13,11 @@ public final class Attribute {
 
     private String mName, mPrefix, mNamespaceUri, mValue;
 
-    public Attribute() {
-        this(null, null);
-    }
-
     public Attribute(String name, String value) {
         this(name, value, null, null);
     }
 
-    public Attribute(String name, String value, String prefix, String namespaceUri) {
+    public Attribute(String name, String value, String namespaceUri, String prefix) {
         mName = name;
         mPrefix = prefix;
         mNamespaceUri = namespaceUri;
@@ -118,5 +114,9 @@ public final class Attribute {
                 + mName + "=\"" + mValue + "\""
                 + ((mNamespaceUri == null) ? "" : " [" + mNamespaceUri + "]")
                 + "}";
+    }
+
+    public String getQualifiedName() {
+        return ((mPrefix == null) ? "" : mPrefix + ':') + mName;
     }
 }

@@ -20,7 +20,7 @@ public class AXMLParserSamplesTest {
 
         for (File sample : samples){
             System.out.println("---------- " + sample.getName() );
-//            parser.parse(new FileInputStream(sample), mListener);
+            parser.parse(new FileInputStream(sample), mListener);
         }
     }
 
@@ -46,27 +46,17 @@ public class AXMLParserSamplesTest {
         }
 
         @Override
-        public void startElement(String uri, String localName, String qName, Attribute[] atts) {
+        public void startElement(String localName, Attribute[] attributes, String uri, String prefix) {
 
         }
 
         @Override
-        public void endElement(String uri, String localName, String qName) {
+        public void endElement(String localName, String uri, String prefix) {
 
         }
 
         @Override
         public void text(String data) {
-
-        }
-
-        @Override
-        public void characterData(String data) {
-
-        }
-
-        @Override
-        public void processingInstruction(String target, String data) {
 
         }
     };
