@@ -1,10 +1,12 @@
 package fr.xgouchet.axml;
 
+import org.w3c.dom.DOMException;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.Text;
 
+import java.io.IOException;
 import java.util.Stack;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -12,6 +14,8 @@ import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
 /**
+ * An AXMLParser.Listener implementation which creates a DOM Document representation
+ *
  * @author Xavier Gouchet
  */
 public class DOMListener implements AXMLParser.Listener {
@@ -22,7 +26,8 @@ public class DOMListener implements AXMLParser.Listener {
 
 
     public DOMListener() throws ParserConfigurationException {
-        mBuilder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
+        mBuilder = DocumentBuilderFactory.newInstance()
+                .newDocumentBuilder();
         mNodeStack = new Stack<>();
     }
 
@@ -34,21 +39,25 @@ public class DOMListener implements AXMLParser.Listener {
 
     @Override
     public void endDocument() {
-        // TODO check that the stack is empty ?
+        // Here we don't check that the stack is empty
+        // but as the listener is used on compiled XML, we can assume that they are valid
     }
 
     @Override
-    public void startPrefixMapping(String prefix, String uri) {
-
-    }
-
-    @Override
-    public void endPrefixMapping(String prefix, String uri) {
+    public void startPrefixMapping(final String prefix, final String uri) {
 
     }
 
     @Override
-    public void startElement(String localName, Attribute[] attributes, String uri, String prefix) {
+    public void endPrefixMapping(final String prefix, final String uri) {
+
+    }
+
+    @Override
+    public void startElement(final String localName,
+                             final Attribute[] attributes,
+                             final String uri,
+                             final String prefix) {
         Element element;
 
         // create element
@@ -74,13 +83,16 @@ public class DOMListener implements AXMLParser.Listener {
     }
 
     @Override
-    public void endElement(String localName, String uri, String prefix) {
+    public void endElement(final String localName,
+                           final String uri,
+                           final String prefix) {
+        // here we pop the last element without any checks,
+        // but as the listener is used on compiled XML, we can assume that they are valid
         mNodeStack.pop();
-        // TODO ? check that the popped element matches the one which is ending
     }
 
     @Override
-    public void text(String data) {
+    public void text(final String data) {
         Text text = mDocument.createTextNode(data);
         mNodeStack.peek().appendChild(text);
     }

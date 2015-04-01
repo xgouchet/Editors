@@ -1,20 +1,25 @@
 package fr.xgouchet.axml;
 
+import android.support.annotation.IntDef;
+
 import org.w3c.dom.Document;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.text.DecimalFormat;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UnknownFormatFlagsException;
+
+import javax.xml.parsers.ParserConfigurationException;
 
 /**
  * The AXML Parser can parse a file or InputStream as a compressed Android XML file
  * <p/>
- * <p/>
- * TODO add convert method (inputStream -> outputStream)
- * TODO make the whole thing concurrent safe
+ * This class is not thread safe, so if you want to parse multiple documents concurrently,
+ * we recommend you create one AXMLParser instance per document.
  *
  * @author Xavier Gouchet
  */
@@ -53,13 +58,22 @@ public class AXMLParser {
     public static final int ENCODING_UTF8 = 0X00000100;
     public static final int ENCODING_UTF16_LE = 0X00000000;
 
+    // The different units for dimensions
     public static final String[] DIMENSION_UNIT = new String[]{"px", "dp", "sp", "pt", "in", "mm"};
+
+    // In the android.R class, this is the order the ids are set... apparently
+    // TODO test those values with files compiled for older versions of Android...
+    private static final String[] ANDROID_REF_TYPES = new String[]{
+            null, "attr", "id", "style", "string", "dimen", "color", "array", "drawable",
+            "layout", "anim", "animator", "interpolator", "mipmap", "integer", "transition"
+    };
 
     // equivalent to 2Ko ints
     private static final int BUFFER_SIZE = 4 * 2048;
 
     private InputStream mInputStream;
     private Listener mListener;
+
 
     private final byte[] mBuffer = new byte[BUFFER_SIZE];
     private int mBufferStartPosition = BUFFER_SIZE;
@@ -77,12 +91,19 @@ public class AXMLParser {
 
     private Map<String, String> mNamespaces = new HashMap<>();
 
-    private int mStylesCount;
-
-    // TODO perform some checks on these two, because maybe we can have some data appended after the document,
-    // or the document can be truncated
     private int mReadBytes;
     private int mDocSize;
+
+    @IntDef({LOG_NONE, LOG_ERRORS_ONLY, LOG_EVERYTHING})
+    public @interface LogVerbosity {
+    }
+
+    public static final int LOG_NONE = 0;
+    public static final int LOG_ERRORS_ONLY = 1;
+    public static final int LOG_EVERYTHING = 2;
+
+    @LogVerbosity
+    private int mVerbosity = LOG_NONE;
 
 
     /**
@@ -92,12 +113,12 @@ public class AXMLParser {
         /**
          * Receive notification of the beginning of a document.
          */
-        void startDocument();
+        void startDocument() throws IOException;
 
         /**
          * Receive notification of the end of a document.
          */
-        void endDocument();
+        void endDocument() throws IOException;
 
         /**
          * Begin the scope of a prefix-URI Namespace mapping. This event is triggered when the parser
@@ -121,46 +142,79 @@ public class AXMLParser {
 
         /**
          * Receive notification of the beginning of an element.
-         *  @param localName  the local name of the element (without prefix)
+         *
+         * @param localName  the local name of the element (without prefix)
          * @param attributes the attributes attached to the element. If there are no
          *                   attributes, it shall be an empty Attributes object.
          * @param uri        the Namespace URI, or null if the element has no Namespace
          * @param prefix     the Namespace prefix, or null if the element has no Namespace
          */
-        void startElement(String localName, Attribute[] attributes, String uri, String prefix);
+        void startElement(String localName, Attribute[] attributes, String uri, String prefix) throws IOException;
 
         /**
          * Receive notification of the end of an element.
-         *  @param localName     the local name (without prefix), or the empty string if
-         *                      Namespace processing is not being performed
-         * @param uri           the Namespace URI, or the empty string if the element has no
-         *                      Namespace URI or if Namespace processing is not being
-         *                      performed
-         * @param prefix the qualified XML name (with prefix), or the empty string if
+         *
+         * @param localName the local name (without prefix), or the empty string if
+         *                  Namespace processing is not being performed
+         * @param uri       the Namespace URI, or the empty string if the element has no
+         *                  Namespace URI or if Namespace processing is not being
+         *                  performed
+         * @param prefix    the qualified XML name (with prefix), or the empty string if
          */
-        void endElement(String localName, String uri, String prefix);
+        void endElement(String localName, String uri, String prefix) throws IOException;
 
         /**
          * Receive notification of text.
          *
          * @param data the text data
          */
-        void text(String data);
+        void text(String data) throws IOException;
+
     }
 
     /**
      * Parses the given input stream and build a DOM representation of the XML document
      *
-     * @param inputStream the input stream to parse
+     * @param inputStream the input stream to parse (it will automatically be closed at the end of
+     *                    the parsing)
      * @return the DOM representation of the document
      */
-    public Document parse(final InputStream inputStream) {
+    public Document parse(final InputStream inputStream)
+            throws IOException, ParserConfigurationException {
+
         if (inputStream == null) {
             throw new NullPointerException();
         }
 
+        DOMListener listener = new DOMListener();
 
-        return null;
+        parse(inputStream, listener);
+
+        return listener.getDocument();
+    }
+
+    /**
+     * Parses the given input stream and writes a standard xml representation into the output-stream
+     *
+     * @param inputStream  the input stream to parse (it will automatically be closed at the end of
+     *                     the parsing)
+     * @param outputStream the output stream to write into (it will automatically be closed at the
+     *                     end of the parsing)
+     */
+    public void parse(final InputStream inputStream,
+                      final OutputStream outputStream)
+            throws IOException {
+        if (inputStream == null) {
+            throw new NullPointerException();
+        }
+
+        if (outputStream == null) {
+            throw new NullPointerException();
+        }
+
+        Listener listener = new OutputStreamListener(outputStream);
+
+        parse(inputStream, listener);
     }
 
     /**
@@ -169,8 +223,10 @@ public class AXMLParser {
      * @param inputStream the input stream to parse (it will automatically be closed at the end of the parsing)
      * @param listener    the listener to trigger on each parsing event
      */
-    public void parse(final InputStream inputStream, final AXMLParser.Listener listener)
+    public void parse(final InputStream inputStream,
+                      final AXMLParser.Listener listener)
             throws IOException {
+
         if ((inputStream == null) || (listener == null)) {
             throw new NullPointerException();
         }
@@ -243,16 +299,26 @@ public class AXMLParser {
                     parseText();
                     break;
                 default:
-                    moveBufferPositionByWords(1);
-                    System.err.println(String.format("Unknown block id : 0x%x at position 0x%x", id, mBufferStartPosition));
+                    if (mReadBytes == 0) {
+                        throw new UnknownFormatFlagsException("This document doesn't seem to be an Android XML document");
+                    } else {
+                        // we're encountering an unknown flag, but we have already read a few, so let's just log that
+                        moveBufferPositionByWords(1);
+                        logError(String.format("Unknown block id : 0x%x at position 0x%x", id, mBufferStartPosition))
+                        ;
+                    }
                     break;
             }
 
             // Check the end of document
-            if (mBufferStartPosition >= mBufferEndPosition) {
+            if (mReadBytes >= mDocSize) {
                 mListener.endDocument();
                 mParsingComplete = true;
-            }
+            } else
+                // Check end of stream
+                if ((mBufferStartPosition >= mBufferEndPosition) && mEndOfStreamReached) {
+                    throw new IOException("Unexpected End Of Stream");
+                }
         }
 
     }
@@ -264,7 +330,7 @@ public class AXMLParser {
      * <li>1 : document size (bytes) including this start block</li>
      * </ul>
      */
-    private void parseStartDocument() {
+    private void parseStartDocument() throws IOException {
         mListener.startDocument();
         mDocSize = readWord(mBufferStartPosition, 1);
 
@@ -312,27 +378,40 @@ public class AXMLParser {
      * </ul>
      * The block is then followed by a list of offset in the string table, one for each string
      */
-    private void parseStringTable() {
+    private void parseStringTable() throws IOException {
 
         // Read block data
         int blockSize = readWord(mBufferStartPosition, 1);
         mStringsCount = readWord(mBufferStartPosition, 2);
-        mStylesCount = readWord(mBufferStartPosition, 3);
+        int stylesCount = readWord(mBufferStartPosition, 3);
         int encoding = readWord(mBufferStartPosition, 4);
         int stringTableOffset = mBufferStartPosition + readWord(mBufferStartPosition, 5);
         int styleOffset = readWord(mBufferStartPosition, 6);
 
-        // read Strings table
-        mStringsTable = new String[mStringsCount];
-
-        // Each string is prefixed by a
-        int offset;
-        for (int i = 0; i < mStringsCount; ++i) {
-            offset = stringTableOffset + readWord(mBufferStartPosition, i + 7);
-            mStringsTable[i] = readString(offset, encoding);
+        // compute the charset
+        String charsetName;
+        switch (encoding) {
+            case ENCODING_UTF8:
+                charsetName = "UTF-8";
+                break;
+            case ENCODING_UTF16_LE:
+                charsetName = "UTF-16LE";
+                break;
+            default:
+                logError(String.format("Unsupported chars type %x", encoding));
+                throw new UnsupportedEncodingException();
         }
 
-        // TODO read the styles ???
+        // read Strings table
+        int offset;
+        mStringsTable = new String[mStringsCount];
+        for (int i = 0; i < mStringsCount; ++i) {
+            offset = stringTableOffset + readWord(mBufferStartPosition, i + 7);
+            mStringsTable[i] = readString(offset, encoding, charsetName);
+        }
+
+        // TODO read the styles
+        logInfo("Style count : " + stylesCount + "; offset : " + styleOffset);
 
         moveBufferPositionByBytes(blockSize);
     }
@@ -348,15 +427,15 @@ public class AXMLParser {
      * <li>5 : index of the namespace uri in String Table</li>
      * </ul>
      */
-    private void parseNamespace(boolean isStartBlock) {
+    private void parseNamespace(final boolean isStartBlock) {
 
-        int blockSize = readWord(mBufferStartPosition, 1);
-        int lineNumber = readWord(mBufferStartPosition, 2);
+//        int blockSize = readWord(mBufferStartPosition, 1);
+//        int lineNumber = readWord(mBufferStartPosition, 2);
         int unknown3 = readWord(mBufferStartPosition, 3);
         int namespacePrefixIndex = readWord(mBufferStartPosition, 4);
         int namespaceUriIndex = readWord(mBufferStartPosition, 5);
 
-//        System.out.println(String.format("Unknown value in namespace block : 0x%x", unknown3));
+        logInfo(String.format("Unknown value in namespace block : 0x%x", unknown3));
 
         final String namespacePrefix = getString(namespacePrefixIndex);
         final String namespaceUri = getString(namespaceUriIndex);
@@ -387,10 +466,10 @@ public class AXMLParser {
      * <li>8 : ??? (seems to be linked with the number of attributes... but only for layout items with style ?!)</li>
      * </ul>
      */
-    private void parseStartTag() {
+    private void parseStartTag() throws IOException {
 
-        int blockSize = readWord(mBufferStartPosition, 1);
-        int lineNumber = readWord(mBufferStartPosition, 2);
+//        int blockSize = readWord(mBufferStartPosition, 1);
+//        int lineNumber = readWord(mBufferStartPosition, 2);
         int unknown3 = readWord(mBufferStartPosition, 3);
         int namespaceUriIndex = readWord(mBufferStartPosition, 4);
         int tagNameIndex = readWord(mBufferStartPosition, 5);
@@ -398,7 +477,7 @@ public class AXMLParser {
         int attributesCount = readWord(mBufferStartPosition, 7);
         int unknown8 = readWord(mBufferStartPosition, 8);
 
-//        System.out.println(String.format("Unknown values in start tag block : 0x%x, 0x%x, 0x%x", unknown3, unknown6, unknown8));
+        logInfo(String.format("Unknown values in start tag block : 0x%x, 0x%x, 0x%x", unknown3, unknown6, unknown8));
 
 
         String localName = getString(tagNameIndex);
@@ -472,6 +551,77 @@ public class AXMLParser {
     }
 
     /**
+     * A block will start with the following word :
+     * <ul>
+     * <li>0 : 0x00100104</li>
+     * <li>1 : block size</li>
+     * <li>2 : line number of this text in the original file</li>
+     * <li>3 : ??? (seems to always be 0xFFFFFFF)</li>
+     * <li>4 : string index in string table</li>
+     * <li>5 : ??? (seems to always be 0x8)</li>
+     * <li>6 : ??? (seems to always be 0x0)</li>
+     * </ul>
+     */
+    private void parseText() throws IOException {
+
+//        int blockSize = readWord(mBufferStartPosition, 1);
+//        int lineNumber = readWord(mBufferStartPosition, 2);
+        int unknown3 = readWord(mBufferStartPosition, 3);
+        int textIndex = readWord(mBufferStartPosition, 4);
+        int unknown5 = readWord(mBufferStartPosition, 5);
+        int unknown6 = readWord(mBufferStartPosition, 6);
+
+        logInfo(String.format("Unknown values in text block : 0x%x, 0x%x, 0x%x", unknown3, unknown5, unknown6));
+
+        String data = getString(textIndex);
+        mListener.text(data);
+
+        moveBufferPositionByWords(7);
+    }
+
+    /**
+     * A closing tag contains the following words :
+     * <ul>
+     * <li>0 : 0x00100103</li>
+     * <li>1 : block size</li>
+     * <li>2 : line number of this tag in the original file</li>
+     * <li>3 : ??? (seems to always be  0xFFFFFFFF)</li>
+     * <li>4 : index of the namespace uri in the String Table, or 0xFFFFFFFF for default namespace</li>
+     * <li>5 : index of element name in String Table</li>
+     * </ul>
+     */
+    private void parseEndTag() throws IOException {
+
+//        int blockSize = readWord(mBufferStartPosition, 1);
+//        int lineNumber = readWord(mBufferStartPosition, 2);
+        int unknown3 = readWord(mBufferStartPosition, 3);
+        int namespaceUriIndex = readWord(mBufferStartPosition, 4);
+        int tagNameIndex = readWord(mBufferStartPosition, 5);
+
+        logInfo(String.format("Unknown value in end tag block : 0x%x", unknown3));
+
+
+        String localName = getString(tagNameIndex);
+        String uri, prefix;
+        if (namespaceUriIndex == DEFAULT_NAMESPACE) {
+            uri = null;
+            prefix = null;
+        } else {
+            uri = getString(namespaceUriIndex);
+            if (mNamespaces.containsKey(uri)) {
+                prefix = mNamespaces.get(uri);
+            } else {
+                uri = null;
+                prefix = null;
+            }
+        }
+
+        mListener.endElement(localName, uri, prefix);
+
+        moveBufferPositionByWords(6);
+    }
+
+    /**
      * @param type the type
      * @param data the data word
      * @return the typed value as a String (in most cases, identitcal to the way it appeared in the
@@ -487,10 +637,10 @@ public class AXMLParser {
             case TYPE_ATTR_REF:
                 value = "?" + getIdReference(data);
                 break;
-
-//          TODO  case TYPE_STRING:
-//                res = getString(data);
-//                break;
+            // TODO find a way to unit test this
+            case TYPE_STRING:
+                value = getString(data);
+                break;
             case TYPE_FLOAT:
                 // keep the same bits, read them as float
                 value = Float.toString(Float.intBitsToFloat(data));
@@ -546,9 +696,8 @@ public class AXMLParser {
                         data & 0xF);
                 break;
             default:
-                System.err.println(
-                        String.format("Attribute type unknown : 0x%x (data = 0x%X) @0x%x",
-                                type, data, mBufferStartPosition));
+                logError(String.format("Attribute type unknown : 0x%x (data = 0x%X) @0x%x",
+                        type, data, mBufferStartPosition));
                 value = String.format("%08X/0x%08X", type, data);
                 break;
         }
@@ -556,14 +705,14 @@ public class AXMLParser {
         return value;
     }
 
-    // In the android.R class, this is the order the ids are set... apparently
-    // TODO test those values with files compiled for older versions of Android...
-    private static final String[] ANDROID_REF_TYPES = new String[]{
-            null, "attr", "id", "style", "string", "dimen", "color", "array", "drawable",
-            "layout", "anim", "animator", "interpolator", "mipmap", "integer", "transition"
-    };
-
-    private String getIdReference(int value) {
+    /**
+     * Return the value (without @ or ?) of a resource id reference. If the resource is an Android
+     * resource, it will return android:type/value. Otherwise, it will always be id/value
+     *
+     * @param value the int value of the resource id
+     * @return the value (eg: @android:drawable/0x01080042, @id/0x7f020193, ...)
+     */
+    private String getIdReference(final int value) {
         String prefix, type;
 
         int typeIndex = (value & 0x00FF0000) >> 16;
@@ -584,81 +733,6 @@ public class AXMLParser {
 
         return String.format("%s%s/0x%08X", prefix, type, value);
     }
-
-
-    /**
-     * A block will start with the following word :
-     * <ul>
-     * <li>0 : 0x00100104</li>
-     * <li>1 : block size</li>
-     * <li>2 : line number of this text in the original file</li>
-     * <li>3 : ??? (seems to always be 0xFFFFFFF)</li>
-     * <li>4 : string index in string table</li>
-     * <li>5 : ??? (seems to always be 0x8)</li>
-     * <li>6 : ??? (seems to always be 0x0)</li>
-     * </ul>
-     */
-    private void parseText() {
-
-        int blockSize = readWord(mBufferStartPosition, 1);
-        int lineNumber = readWord(mBufferStartPosition, 2);
-        int unknown3 = readWord(mBufferStartPosition, 3);
-        int textIndex = readWord(mBufferStartPosition, 4);
-        int unknown5 = readWord(mBufferStartPosition, 5);
-        int unknown6 = readWord(mBufferStartPosition, 6);
-
-        System.out.println(String.format("Unknown values in text block : 0x%x, 0x%x, 0x%x", unknown3, unknown5, unknown6));
-
-
-        String data = getString(textIndex);
-        mListener.text(data);
-
-
-        moveBufferPositionByWords(7);
-    }
-
-    /**
-     * A closing tag contains the following words :
-     * <ul>
-     * <li>0 : 0x00100103</li>
-     * <li>1 : block size</li>
-     * <li>2 : line number of this tag in the original file</li>
-     * <li>3 : ??? (seems to always be  0xFFFFFFFF)</li>
-     * <li>4 : index of the namespace uri in the String Table, or 0xFFFFFFFF for default namespace</li>
-     * <li>5 : index of element name in String Table</li>
-     * </ul>
-     */
-    private void parseEndTag() {
-
-        int blockSize = readWord(mBufferStartPosition, 1);
-        int lineNumber = readWord(mBufferStartPosition, 2);
-        int unknown3 = readWord(mBufferStartPosition, 3);
-        int namespaceUriIndex = readWord(mBufferStartPosition, 4);
-        int tagNameIndex = readWord(mBufferStartPosition, 5);
-
-//        System.out.println(String.format("Unknown value in end tag block : 0x%x", unknown3));
-
-
-        String localName = getString(tagNameIndex);
-        String uri, prefix;
-        if (namespaceUriIndex == DEFAULT_NAMESPACE) {
-            uri = null;
-            prefix = null;
-        } else {
-            uri = getString(namespaceUriIndex);
-            if (mNamespaces.containsKey(uri)) {
-                prefix = mNamespaces.get(uri) ;
-            } else {
-                uri = null;
-                prefix = null;
-            }
-        }
-
-        mListener.endElement(localName, uri, prefix);
-
-        moveBufferPositionByWords(6);
-    }
-
 
     /**
      * Get a string from the string table
@@ -682,10 +756,14 @@ public class AXMLParser {
      *               data array)
      * @return the String
      */
-    private String readString(final int offset, final int encoding) {
+    private String readString(final int offset,
+                              final int encoding,
+                              final String charsetName)
+            throws UnsupportedEncodingException {
+
         int bytesCount, charOffset, charsCount;
         byte data[];
-        String charsetName, result;
+        String result;
 
         // Each string is prefix by 2 bytes indicating the length of the string
         charOffset = offset + 2;
@@ -695,17 +773,14 @@ public class AXMLParser {
                 charsCount = mBuffer[offset];
                 bytesCount = mBuffer[offset + 1];
                 data = new byte[bytesCount];
-                charsetName = "UTF-8";
                 break;
             case ENCODING_UTF16_LE:
                 charsCount = ((mBuffer[offset + 1] << 8) & 0xFF00) | (mBuffer[offset] & 0xFF);
                 bytesCount = charsCount * 2;
                 data = new byte[bytesCount];
-                charsetName = "UTF-16LE";
                 break;
             default:
-                System.err.println(String.format("Unsupporting chars type %x", encoding));
-                return "";
+                throw new UnsupportedEncodingException();
         }
 
         // copy the string bytes
@@ -715,7 +790,7 @@ public class AXMLParser {
         try {
             result = new String(data, charsetName);
             if (result.length() != charsCount) {
-                System.err.println("Decoding seems off, expecting " + charsCount + " characters, final String has " + result.length());
+                logError("Decoding seems off, expecting " + charsCount + " characters, final String has " + result.length());
             }
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
@@ -724,12 +799,14 @@ public class AXMLParser {
         return result;
     }
 
-    private void moveBufferPositionByWords(int wordCount) {
+    private void moveBufferPositionByWords(final int wordCount) {
         mBufferStartPosition += wordCount * WORD_SIZE;
+        mReadBytes += wordCount * WORD_SIZE;
     }
 
-    private void moveBufferPositionByBytes(int byteCount) {
+    private void moveBufferPositionByBytes(final int byteCount) {
         mBufferStartPosition += byteCount;
+        mReadBytes += byteCount;
     }
 
     /**
@@ -768,7 +845,7 @@ public class AXMLParser {
      * @param wordIndex         the index of the word after the offset
      * @return the word as an int
      */
-    private int readWord(int bufferStartOffset, int wordIndex) {
+    private int readWord(final int bufferStartOffset, final int wordIndex) {
 
         int offset = bufferStartOffset + (wordIndex * WORD_SIZE);
 
@@ -778,5 +855,25 @@ public class AXMLParser {
                 | ((mBuffer[offset]) & 0x000000ff);
     }
 
+    /**
+     * @param verbosity the verbosity of this parser (LOG_NONE, LOG_ERRORS_ONLY or LOG_EVERYTHING).
+     *                  Default is LOG_NONE.
+     */
+    public void setVerbosity(@LogVerbosity int verbosity) {
+        mVerbosity = verbosity;
+    }
 
+    private void logError(String log) {
+        if (mVerbosity != LOG_NONE) {
+            // TODO when Android Unit Test allows it, use Android Log
+            System.err.println(log);
+        }
+    }
+
+    private void logInfo(String log) {
+        if (mVerbosity == LOG_EVERYTHING) {
+            // TODO when Android Unit Test allows it, use Android Log
+            System.out.println(log);
+        }
+    }
 }

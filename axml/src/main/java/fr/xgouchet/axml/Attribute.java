@@ -9,6 +9,7 @@ package fr.xgouchet.axml;
  * If the xml tag is <code>&lt;element xmlns:bar="spam" foo="42"/&gt;</code>, then the Attribute will
  * have a name "foo", value "42", prefix "bar" and namespace "spam"
  */
+@SuppressWarnings("UnusedDeclaration")
 public final class Attribute {
 
     private String mName, mPrefix, mNamespaceUri, mValue;

@@ -4,11 +4,16 @@ import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Matchers;
+import org.w3c.dom.Document;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
+
+import javax.xml.parsers.ParserConfigurationException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.AdditionalMatchers.aryEq;
@@ -38,12 +43,54 @@ public class AXMLParserTest {
     @Test(expected = NullPointerException.class)
     public void shouldHandleNullListener() throws IOException {
         InputStream inputStream = mock(InputStream.class);
-        mParser.parse(inputStream, null);
+        mParser.parse(inputStream, (AXMLParser.Listener) null);
     }
 
     @Test(expected = NullPointerException.class)
-    public void shouldHandleNullInputStream_DOM() {
+    public void shouldHandleNullInputStream_DOM() throws IOException, ParserConfigurationException {
         mParser.parse(null);
+    }
+
+    @Test(expected = NullPointerException.class)
+    public void shouldHandleNullInputStream_OS() throws IOException {
+        OutputStream output = mock(OutputStream.class);
+        mParser.parse(null, output);
+    }
+
+
+    @Test(expected = NullPointerException.class)
+    public void shouldHandleNullOutputStream() throws IOException {
+        InputStream inputStream = mock(InputStream.class);
+        mParser.parse(inputStream, (OutputStream) null);
+    }
+
+    @Test
+    public void shouldParseIntoOutputStream() throws IOException {
+        // Select file
+        File file = new File("testres/axml/empty.xml");
+        FileInputStream inputStream = new FileInputStream(file);
+        System.out.println(file.getPath());
+
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        mParser.parse(inputStream, outputStream);
+
+        String output = new String(outputStream.toByteArray());
+
+
+        assertThat(output).isEqualTo("<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<root/>\n");
+    }
+
+    @Test
+    public void shouldParseIntoDOMDocument() throws IOException, ParserConfigurationException {
+        // Select file
+        File file = new File("testres/axml/empty.xml");
+        FileInputStream inputStream = new FileInputStream(file);
+        System.out.println(file.getPath());
+
+        Document doc = mParser.parse(inputStream);
+
+        assertThat(doc).isNotNull();
+        assertThat(doc.getDocumentElement()).isNotNull();
     }
 
     @Test
@@ -164,8 +211,8 @@ public class AXMLParserTest {
 
         verify(mMockListener).startDocument();
         verify(mMockListener).startPrefixMapping(eq("android"), eq("http://schemas.android.com/apk/res/android"));
-        verify(mMockListener).startElement(eq("TextView"), attributesCaptor.capture(),isNull(String.class), isNull(String.class));
-        verify(mMockListener).endElement(eq("TextView"),isNull(String.class), isNull(String.class));
+        verify(mMockListener).startElement(eq("TextView"), attributesCaptor.capture(), isNull(String.class), isNull(String.class));
+        verify(mMockListener).endElement(eq("TextView"), isNull(String.class), isNull(String.class));
         verify(mMockListener).endPrefixMapping(eq("android"), eq("http://schemas.android.com/apk/res/android"));
         verify(mMockListener).endDocument();
 
@@ -255,7 +302,7 @@ public class AXMLParserTest {
         verify(mMockListener).text(eq("Lorem ipsum dolor sit amet"));
         verify(mMockListener).endElement(eq("withtext"), isNull(String.class), isNull(String.class));
 
-        verify(mMockListener).startElement(eq("withcdata"), aryEq(new Attribute[]{}),isNull(String.class), isNull(String.class));
+        verify(mMockListener).startElement(eq("withcdata"), aryEq(new Attribute[]{}), isNull(String.class), isNull(String.class));
         verify(mMockListener).text(eq("Plop"));
         verify(mMockListener).endElement(eq("withcdata"), isNull(String.class), isNull(String.class));
 
@@ -317,7 +364,7 @@ public class AXMLParserTest {
         mParser.parse(inputStream, mMockListener);
 
         verify(mMockListener).startDocument();
-        verify(mMockListener).startElement(eq("root"), aryEq(new Attribute[]{}),isNull(String.class), isNull(String.class));
+        verify(mMockListener).startElement(eq("root"), aryEq(new Attribute[]{}), isNull(String.class), isNull(String.class));
 
         verify(mMockListener).startElement(eq("uni"), aryEq(new Attribute[]{}), isNull(String.class), isNull(String.class));
         verify(mMockListener).text(eq("▲é#ààç€¢æð»"));

@@ -2,6 +2,7 @@ package fr.xgouchet.axml;
 
 import org.junit.Test;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -17,12 +18,18 @@ public class AXMLParserSamplesTest {
 
         File[] samples = dir.listFiles();
         AXMLParser parser = new AXMLParser();
+        parser.setVerbosity(AXMLParser.LOG_EVERYTHING);
 
+        ByteArrayOutputStream output;
         for (File sample : samples){
             System.out.println("---------- " + sample.getName() );
-            parser.parse(new FileInputStream(sample), mListener);
+            output = new ByteArrayOutputStream();
+            parser.parse(new FileInputStream(sample), output);
+
+            System.out.println(new String(output.toByteArray()));
         }
     }
+
 
     private AXMLParser.Listener mListener = new AXMLParser.Listener() {
         @Override

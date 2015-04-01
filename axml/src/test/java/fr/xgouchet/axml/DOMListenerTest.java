@@ -121,15 +121,14 @@ public class DOMListenerTest {
         };
 
         mDOMListener.startDocument();
-        mDOMListener.startElement("foo", new Attribute[0], null, null);
         mDOMListener.startPrefixMapping(prefix, uri);
+        mDOMListener.startElement("foo", new Attribute[0], null, null);
         mDOMListener.startElement("bar", attributes, null, null);
         mDOMListener.endElement("bar", null, "bar");
         mDOMListener.startElement("bacon", new Attribute[0], uri, "plop");
         mDOMListener.endElement("bacon", uri, "plop:");
-        mDOMListener.endPrefixMapping(prefix, uri);
         mDOMListener.endElement("foo", null, null);
-
+        mDOMListener.endPrefixMapping(prefix, uri);
         mDOMListener.endDocument();
 
         Document doc = mDOMListener.getDocument();
