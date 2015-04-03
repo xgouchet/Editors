@@ -5,6 +5,15 @@
       <GradleProjectSettings>
         <option name="distributionType" value="DEFAULT_WRAPPED" />
         <option name="externalProjectPath" value="$PROJECT_DIR$" />
+        <option name="modules">
+          <set>
+            <option value="$PROJECT_DIR$" />
+            <option value="$PROJECT_DIR$/axel" />
+            <option value="$PROJECT_DIR$/axml" />
+            <option value="$PROJECT_DIR$/ted" />
+            <option value="$PROJECT_DIR$/xmlgen" />
+          </set>
+        </option>
       </GradleProjectSettings>
     </option>
   </component>

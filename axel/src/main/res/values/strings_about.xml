@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="config_email">android@xgouchet.fr</string>
+    <string name="config_playstore_developer">"https://market.android.com/developer?pub=Xavier+Gouchet"</string>
+    <string name="config_playstore_app">"https://play.google.com/store/apps/details?id=%s"</string>
+</resources>

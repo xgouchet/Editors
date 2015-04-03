@@ -5,17 +5,48 @@ android {
     buildToolsVersion "22.0.0"
 
     defaultConfig {
-        applicationId "fr.xgouchet.axel"
+        applicationId "fr.xgouchet.xmleditor"
         minSdkVersion 15
         targetSdkVersion 22
-        versionCode 1
-        versionName "1.0"
+        versionCode 13
+        versionName "3.0"
+    }
+
+    signingConfigs {
+        debug {
+            storeFile file("${projectDir.parentFile.parentFile.absolutePath}/.publish/debug.keystore")
+        }
+
+        release {
+            Properties props = new Properties()
+            props.load(new FileInputStream("${projectDir.parentFile.parentFile.absolutePath}/.publish/keystores.properties"))
+            storeFile file("${projectDir.parentFile.parentFile.absolutePath}/.publish/xgouchet.keystore")
+
+            storePassword props.releaseStorePassword
+            keyAlias props.releaseKeyAlias
+            keyPassword props.releaseKeyPassword
+        }
     }
 
     buildTypes {
+        debug {
+            debuggable true
+            signingConfig signingConfigs.debug
+        }
+        debugCert {
+            minifyEnabled false
+            debuggable true
+            signingConfig signingConfigs.release
+        }
         release {
             minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.release
+        }
+    }
+
+    productFlavors {
+        beta {
+            applicationId "fr.xgouchet.xmleditor.beta"
         }
     }
 
@@ -30,6 +61,7 @@ dependencies {
     compile 'com.android.support:appcompat-v7:22.0.0'
     compile 'com.android.support:cardview-v7:22.0.0'
     compile 'com.android.support:recyclerview-v7:22.0.0'
+    compile 'com.android.support:support-annotations:22.0.0'
 
     // ASPECT
     compile 'org.aspectj:aspectjrt:1.8.1'
