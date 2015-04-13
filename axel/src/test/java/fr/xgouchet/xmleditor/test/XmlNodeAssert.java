@@ -3,17 +3,22 @@ package fr.xgouchet.xmleditor.test;
 import org.assertj.core.api.AbstractAssert;
 
 import fr.xgouchet.xmleditor.core.model.TreeNode;
+import fr.xgouchet.xmleditor.core.model.XmlNode;
+import fr.xgouchet.xmleditor.core.xml.XmlData;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * @author Xavier Gouchet
  */
-@SuppressWarnings("unchecked")
-public class TreeNodeAssert<T> extends AbstractAssert<TreeNodeAssert<T>, TreeNode<T>> {
+public class XmlNodeAssert extends AbstractAssert<XmlNodeAssert, XmlNode> {
 
-    public TreeNodeAssert(TreeNode<T> actual) {
-        super(actual, TreeNodeAssert.class);
+    TreeNodeAssert<XmlData> mXmlDataTreeNodeAssert;
+
+    public XmlNodeAssert(XmlNode actual) {
+        super(actual, XmlNodeAssert.class);
+
+        mXmlDataTreeNodeAssert = new TreeNodeAssert<>(actual);
     }
 
     /**
@@ -22,12 +27,10 @@ public class TreeNodeAssert<T> extends AbstractAssert<TreeNodeAssert<T>, TreeNod
      * @param parent the node to compare the actual parent to
      * @return this assertion object
      */
-    public TreeNodeAssert<T> hasParent(TreeNode<T> parent) {
+    public XmlNodeAssert hasParent(XmlNode parent) {
         isNotNull();
 
-        assertThat(actual.getParent())
-                .overridingErrorMessage("Expected parent to be <%s> but was <%s>", parent, actual.getParent())
-                .isEqualTo(parent);
+        mXmlDataTreeNodeAssert.hasParent(parent);
 
         return this;
     }
@@ -37,12 +40,10 @@ public class TreeNodeAssert<T> extends AbstractAssert<TreeNodeAssert<T>, TreeNod
      *
      * @return this assertion object
      */
-    public TreeNodeAssert<T> hasNullParent() {
+    public XmlNodeAssert hasNullParent() {
         isNotNull();
 
-        assertThat(actual.getParent())
-                .overridingErrorMessage("Expected parent to be <null> but was <%s>", actual.getParent())
-                .isNull();
+        mXmlDataTreeNodeAssert.hasNullParent();
 
         return this;
     }
@@ -54,12 +55,10 @@ public class TreeNodeAssert<T> extends AbstractAssert<TreeNodeAssert<T>, TreeNod
      * @param data the given data to compare the actual data to.
      * @return this assertion object
      */
-    public TreeNodeAssert<T> hasData(T data) {
+    public XmlNodeAssert hasData(XmlData data) {
         isNotNull();
 
-        assertThat(actual.getData())
-                .overridingErrorMessage("Expected data to be <%s> but was <%s>", data, actual.getData())
-                .isEqualTo(data);
+        mXmlDataTreeNodeAssert.hasData(data);
 
         return this;
     }
@@ -70,12 +69,10 @@ public class TreeNodeAssert<T> extends AbstractAssert<TreeNodeAssert<T>, TreeNod
      * @param data the given data to compare the actual data to.
      * @return this assertion object
      */
-    public TreeNodeAssert<T> hasDataExactly(T data) {
+    public XmlNodeAssert hasDataExactly(XmlData data) {
         isNotNull();
 
-        assertThat(actual.getData())
-                .overridingErrorMessage("Expected data to be <%s> but was <%s>", data, actual.getData())
-                .isSameAs(data);
+        mXmlDataTreeNodeAssert.hasDataExactly(data);
 
         return this;
     }
@@ -86,11 +83,10 @@ public class TreeNodeAssert<T> extends AbstractAssert<TreeNodeAssert<T>, TreeNod
      * @param children the expected children in order
      * @return this assertion object
      */
-    public TreeNodeAssert<T> hasChildrenExactly(TreeNode<T>... children) {
+    public XmlNodeAssert hasChildrenExactly(XmlNode... children) {
         isNotNull();
 
-        assertThat(actual.getChildren())
-                .containsExactly(children);
+        mXmlDataTreeNodeAssert.hasChildrenExactly(children);
 
         return this;
     }
@@ -102,11 +98,10 @@ public class TreeNodeAssert<T> extends AbstractAssert<TreeNodeAssert<T>, TreeNod
      * @param children the expected children, in any order
      * @return this assertion object
      */
-    public TreeNodeAssert<T> hasChildren(TreeNode<T>... children) {
+    public XmlNodeAssert hasChildren(XmlNode... children) {
         isNotNull();
 
-        assertThat(actual.getChildren())
-                .contains(children);
+        mXmlDataTreeNodeAssert.hasChildren(children);
 
         return this;
     }
@@ -118,29 +113,39 @@ public class TreeNodeAssert<T> extends AbstractAssert<TreeNodeAssert<T>, TreeNod
      * @param nodes the nodes we don't want to find has children
      * @return this assertion object
      */
-    public TreeNodeAssert<T> doesNotHaveChildren(TreeNode<T>... nodes) {
+    public XmlNodeAssert doesNotHaveChildren(XmlNode... nodes) {
         isNotNull();
 
-        assertThat(actual.getChildren())
-                .doesNotContain(nodes);
+        mXmlDataTreeNodeAssert.doesNotHaveChildren(nodes);
 
         return this;
     }
 
     /**
-     * Verify that the actual node has a the given depth
+     * Verify that the actual node has the given depth
      *
      * @return this assertion object
      */
-    public TreeNodeAssert<T> hasDepth(int depth) {
+    public XmlNodeAssert hasDepth(int depth) {
         isNotNull();
 
-        assertThat(actual.getDepth())
-                .overridingErrorMessage("Expected depth to be <%d> but was <%d>", depth, actual.getDepth())
-                .isEqualTo(depth);
+        mXmlDataTreeNodeAssert.hasDepth(depth);
 
         return this;
     }
 
+    /**
+     * Verify that the actual node as the given XPath
+     *
+     * @return this assertion object
+     */
+    public XmlNodeAssert hasXPath(String xPath) {
+        isNotNull();
 
+        assertThat(actual.getXPath())
+                .overridingErrorMessage("Expecting XPath to be <%s> but was <%s>", xPath, actual.getXPath())
+                .isEqualTo(xPath);
+
+        return this;
+    }
 }

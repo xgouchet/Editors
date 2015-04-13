@@ -25,7 +25,7 @@ public class TreeNode<T> {
      *
      * @param data the data held by this node (note that it <b>can't</b> be changed afterwards)
      */
-    public TreeNode(final @Nullable T data) {
+    public TreeNode(final @NonNull T data) {
         this(null, data);
     }
 
@@ -36,7 +36,7 @@ public class TreeNode<T> {
      *               attached or removed from other nodes )
      * @param data   the data held by this node (note that it <b>can't</b> be changed afterwards)
      */
-    public TreeNode(final @Nullable TreeNode<T> parent, final @Nullable T data) {
+    public TreeNode(final @Nullable TreeNode<T> parent, final @NonNull T data) {
         mData = data;
 
         if (parent != null) {
@@ -95,7 +95,7 @@ public class TreeNode<T> {
     /**
      * @return the user data in this node
      */
-    @Nullable
+    @NonNull
     public T getData() {
         return mData;
     }
@@ -126,12 +126,12 @@ public class TreeNode<T> {
      * @param node a node to test
      * @return if the given node is an ancestor of this node
      */
-    public boolean isAncestor(final @NonNull TreeNode <T> node){
+    public boolean isAncestor(final @NonNull TreeNode<T> node) {
 
         TreeNode<T> ancestor = getParent();
 
-        while (ancestor != null){
-            if (ancestor == node){
+        while (ancestor != null) {
+            if (ancestor == node) {
                 return true;
             }
 
@@ -154,7 +154,7 @@ public class TreeNode<T> {
         }
 
         // child is an ancestor (avoid weird families)
-        if (isAncestor(child)){
+        if (isAncestor(child)) {
             throw new UnsupportedOperationException("Cannot append child, it is an ancestor of this node");
         }
 
@@ -184,7 +184,7 @@ public class TreeNode<T> {
         }
 
         // child is an ancestor (avoid weird families)
-        if (isAncestor(child)){
+        if (isAncestor(child)) {
             throw new UnsupportedOperationException("Cannot append child, it is an ancestor of this node");
         }
 

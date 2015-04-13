@@ -60,7 +60,7 @@ public class XmlUtils {
     protected static final String[] TYPES = new String[]{
             "INVALID",
             "Document",
-            "Doctype",
+            "DocType",
             "Processing Instruction",
             "Element",
             "CData",
