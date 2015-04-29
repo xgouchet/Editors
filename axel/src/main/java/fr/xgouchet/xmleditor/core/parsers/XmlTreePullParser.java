@@ -4,6 +4,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.text.TextUtils;
 import android.util.Log;
+import android.util.SparseIntArray;
 
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
@@ -241,40 +242,71 @@ public class XmlTreePullParser extends AXmlTreeParser {
     @NonNull
     private Collection<XmlAttribute> pullAttributes() {
         Collection<XmlAttribute> attributes = new HashSet<>();
-
-        String name, value, prefix, uri;
+        SparseIntArray unreadAttributes = new SparseIntArray();
         int attributeCount = mPullParser.getAttributeCount();
+        XmlAttribute attribute;
 
+        // First pass !
         for (int i = 0; i < attributeCount; ++i) {
-            name = mPullParser.getAttributeName(i);
-            value = mPullParser.getAttributeValue(i);
-            prefix = extractPrefix(name);
-            if (prefix != null) {
-                name = name.substring(prefix.length() + 1);
+            attribute = pullAttribute(i, attributes);
 
-                // get the actual namespace uri (for that we also need the attributes in this element)
-                uri = getNamespace(prefix);
-                if (uri == null) {
-                    uri = getNamespace(prefix, attributes);
-                }
-                if (uri == null) {
-                    // TODO maybe do this in 2 passes, keep this attribute's index to go over it again later
-                    Log.w(TAG, "We're going to have a bad time here ! ");
-                }
+            if (attribute == null) {
+                Log.d(TAG, "Delaying parsing for attribute #" + i);
+                unreadAttributes.put(i, i);
             } else {
-                uri = null;
+                attributes.add(attribute);
             }
+        }
 
-            if (uri == null) {
-                Log.i(TAG, "Found attr : " + name + "=\"" + value + "\"");
-                attributes.add(new XmlAttribute(name, value));
+        // Second pass, if we needed URIs
+        attributeCount = unreadAttributes.size();
+        for (int i = 0; i < attributeCount; ++i) {
+            attribute = pullAttribute(unreadAttributes.keyAt(i), attributes);
+            if (attribute == null) {
+                Log.w(TAG, "Impossible to read attribute #" + i);
             } else {
-                Log.i(TAG, "Found attr : " + prefix + ":" + name + "=\"" + value + "\"");
-                attributes.add(new XmlAttribute(name, value, prefix, uri));
+                attributes.add(attribute);
             }
         }
 
         return attributes;
+    }
+
+    @Nullable
+    private XmlAttribute pullAttribute(final int index,
+                                       final @NonNull Collection<XmlAttribute> localAttributes) {
+        // get the name and value
+        String name = mPullParser.getAttributeName(index);
+        String value = mPullParser.getAttributeValue(index);
+
+        // the parser is namespace agnostic, we need to do all the work
+        String prefix = extractPrefix(name);
+        String uri;
+
+        if (prefix == null) {
+            Log.i(TAG, "Found attr  " + name + "=\"" + value + "\"");
+            return new XmlAttribute(name, value);
+        } else {
+            // update name
+            name = name.substring(prefix.length() + 1);
+
+            // get the actual namespace uri
+            uri = getNamespace(prefix);
+            if (uri == null) {
+                uri = getNamespace(prefix, localAttributes);
+            }
+
+            if (uri == null) {
+                // we need an uri that we can't find
+                // it's probably declared in the same element, but we haven't read it yet
+                Log.d(TAG, "Missing namespace uri for attribute " + prefix + ":" + name + "=\"" + value + "\"");
+                return null;
+            }
+
+            Log.i(TAG, "Found attr  " + prefix + ":" + name + "=\"" + value + "\"");
+            return new XmlAttribute(name, value, prefix, uri);
+        }
+
     }
 
 
