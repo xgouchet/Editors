@@ -3,17 +3,24 @@ package fr.xgouchet.xmleditor.core.xml;
 
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.robolectric.RobolectricGradleTestRunner;
+import org.robolectric.annotation.Config;
+
+import fr.xgouchet.xmleditor.AxelTestApplication;
+import fr.xgouchet.xmleditor.BuildConfig;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.mockito.Mockito.mock;
 
-public class XmlDataWithAttributesTest {
+@RunWith(RobolectricGradleTestRunner.class)
+@Config(constants = BuildConfig.class, emulateSdk = 18, application = AxelTestApplication.class)
+public class XmlAttributedContentTest {
 
-    private XmlDataWithAttributes mData;
+    private XmlAttributedContent mData;
 
     @Before
     public void setUp() {
-        mData = new XmlDataWithAttributes(XmlUtils.XML_ELEMENT) {
+        mData = new XmlAttributedContent(XmlUtils.XML_ELEMENT) {
         };
     }
 
@@ -63,6 +70,7 @@ public class XmlDataWithAttributesTest {
                 .contains(attr0, attr1, attr2);
     }
 
+    @Test
     public void shouldGetAttributeByQualifiedName() {
         shouldAddAttributes();
 
@@ -75,4 +83,6 @@ public class XmlDataWithAttributesTest {
         assertThat(mData.getAttribute("pref:spam")).isEqualTo(attr2);
 
     }
+
+
 }

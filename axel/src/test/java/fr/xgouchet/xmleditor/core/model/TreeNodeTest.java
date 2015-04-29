@@ -3,10 +3,12 @@ package fr.xgouchet.xmleditor.core.model;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.robolectric.RobolectricGradleTestRunner;
+import org.robolectric.annotation.Config;
 
-import java.io.UnsupportedEncodingException;
-
-import fr.xgouchet.xmleditor.test.Assertions;
+import fr.xgouchet.xmleditor.AxelTestApplication;
+import fr.xgouchet.xmleditor.BuildConfig;
 
 import static fr.xgouchet.xmleditor.test.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -14,6 +16,8 @@ import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.mock;
 
+@RunWith(RobolectricGradleTestRunner.class)
+@Config(constants = BuildConfig.class, emulateSdk = 18, application = AxelTestApplication.class)
 @SuppressWarnings("unchecked")
 public class TreeNodeTest {
 
@@ -291,7 +295,7 @@ public class TreeNodeTest {
     }
 
     @Test(expected = UnsupportedOperationException.class)
-    public void shouldNotAddAncestorAsChild(){
+    public void shouldNotAddAncestorAsChild() {
         TreeNode a = new TreeNode(null);
         TreeNode b = new TreeNode(a, null);
         TreeNode c = new TreeNode(b, null);
@@ -301,7 +305,7 @@ public class TreeNodeTest {
 
 
     @Test(expected = UnsupportedOperationException.class)
-    public void shouldNotInsertAncestorAsChild(){
+    public void shouldNotInsertAncestorAsChild() {
         TreeNode a = new TreeNode(null);
         TreeNode b = new TreeNode(a, null);
         TreeNode c = new TreeNode(b, null);

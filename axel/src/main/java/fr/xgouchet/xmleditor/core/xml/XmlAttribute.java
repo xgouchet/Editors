@@ -60,27 +60,10 @@ public class XmlAttribute {
         return mNamespace == null ? null : mNamespace.getUri();
     }
 
-
-    public void setName(final @NonNull String name) {
-        mName = name;
-    }
-
-    public void setValue(final @NonNull String value) {
-        mValue = value;
-    }
-
-    public void setNamespace(final @Nullable XmlNamespace namespace) {
-        mNamespace = namespace;
-    }
-
-    public void setNamespace(final @Nullable String namespacePrefix, final @Nullable String namespaceUri) {
-
-        mNamespace = XmlNamespace.from(namespacePrefix, namespaceUri);
-    }
-
     @NonNull
     public String getQualifiedName() {
-        return (mNamespace == null) ? mName : (mNamespace.getPrefix() + ':' + mName);
+        String prefix = getNamespacePrefix();
+        return (prefix == null) ? mName : (prefix + XmlUtils.PREFIX_SEPARATOR + mName);
     }
 
     @Override

@@ -4,33 +4,31 @@ package fr.xgouchet.xmleditor.core.model;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.robolectric.RobolectricGradleTestRunner;
+import org.robolectric.annotation.Config;
 
-import fr.xgouchet.xmleditor.core.xml.XmlCharData;
-import fr.xgouchet.xmleditor.core.xml.XmlCommentData;
-import fr.xgouchet.xmleditor.core.xml.XmlData;
-import fr.xgouchet.xmleditor.core.xml.XmlDocDeclData;
-import fr.xgouchet.xmleditor.core.xml.XmlDocTypeData;
-import fr.xgouchet.xmleditor.core.xml.XmlDocumentData;
-import fr.xgouchet.xmleditor.core.xml.XmlElementData;
-import fr.xgouchet.xmleditor.core.xml.XmlProcInstrData;
-import fr.xgouchet.xmleditor.core.xml.XmlTextData;
+import fr.xgouchet.xmleditor.AxelTestApplication;
+import fr.xgouchet.xmleditor.BuildConfig;
+import fr.xgouchet.xmleditor.core.xml.XmlCData;
+import fr.xgouchet.xmleditor.core.xml.XmlComment;
+import fr.xgouchet.xmleditor.core.xml.XmlDocument;
+import fr.xgouchet.xmleditor.core.xml.XmlDocumentDeclaration;
+import fr.xgouchet.xmleditor.core.xml.XmlElement;
+import fr.xgouchet.xmleditor.core.xml.XmlProcessingInstruction;
+import fr.xgouchet.xmleditor.core.xml.XmlSystemDTD;
+import fr.xgouchet.xmleditor.core.xml.XmlText;
 import fr.xgouchet.xmleditor.core.xml.XmlUtils;
 
 import static fr.xgouchet.xmleditor.test.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.fail;
-import static org.mockito.Mockito.doNothing;
-import static org.mockito.Mockito.mock;
 
+@RunWith(RobolectricGradleTestRunner.class)
+@Config(constants = BuildConfig.class, emulateSdk = 18, application = AxelTestApplication.class)
 public class XmlNodeTest {
 
-//    private XmlData mXmlData;
-//    private XmlNode mXmlNode;
 
     @Before
     public void setUp() {
-//        mXmlData = mock(XmlData.class);
-//        mXmlNode = new XmlNode(mXmlData);
     }
 
     @After
@@ -40,10 +38,10 @@ public class XmlNodeTest {
 
     @Test
     public void shouldComputeXPath_BasicStructure() {
-        XmlNode foo = new XmlNode(new XmlElementData("foo"));
-        XmlNode bar = new XmlNode(foo, new XmlElementData("bar"));
-        XmlNode eggs = new XmlNode(bar, new XmlElementData("eggs"));
-        XmlNode bacon = new XmlNode(bar, new XmlElementData("bacon"));
+        XmlNode foo = new XmlNode(new XmlElement("foo"));
+        XmlNode bar = new XmlNode(foo, new XmlElement("bar"));
+        XmlNode eggs = new XmlNode(bar, new XmlElement("eggs"));
+        XmlNode bacon = new XmlNode(bar, new XmlElement("bacon"));
 
         assertThat(foo).hasXPath("/foo");
         assertThat(bar).hasXPath("/foo/bar");
@@ -53,10 +51,10 @@ public class XmlNodeTest {
 
     @Test
     public void shouldComputeXPath_BasicStructureWithNs() {
-        XmlNode foo = new XmlNode(new XmlElementData("foo"));
-        XmlNode bar = new XmlNode(foo, new XmlElementData("bar", "plop", "plop.com"));
-        XmlNode eggs = new XmlNode(bar, new XmlElementData("eggs"));
-        XmlNode bacon = new XmlNode(bar, new XmlElementData("bacon", "bip", "bip.com"));
+        XmlNode foo = new XmlNode(new XmlElement("foo"));
+        XmlNode bar = new XmlNode(foo, new XmlElement("bar", "plop", "plop.com"));
+        XmlNode eggs = new XmlNode(bar, new XmlElement("eggs"));
+        XmlNode bacon = new XmlNode(bar, new XmlElement("bacon", "bip", "bip.com"));
 
         assertThat(foo).hasXPath("/foo");
         assertThat(bar).hasXPath("/foo/plop:bar");
@@ -66,12 +64,12 @@ public class XmlNodeTest {
 
     @Test
     public void shouldComputeXPath_WithIndex() {
-        XmlNode foo = new XmlNode(new XmlElementData("foo"));
-        XmlNode bar = new XmlNode(foo, new XmlElementData("bar", "plop", "plop.com"));
-        XmlNode eggs0 = new XmlNode(bar, new XmlElementData("eggs"));
-        XmlNode bacon = new XmlNode(bar, new XmlElementData("bacon", "bip", "bip.com"));
-        XmlNode eggs1 = new XmlNode(bar, new XmlElementData("eggs"));
-        XmlNode eggs2 = new XmlNode(bar, new XmlElementData("eggs"));
+        XmlNode foo = new XmlNode(new XmlElement("foo"));
+        XmlNode bar = new XmlNode(foo, new XmlElement("bar", "plop", "plop.com"));
+        XmlNode eggs0 = new XmlNode(bar, new XmlElement("eggs"));
+        XmlNode bacon = new XmlNode(bar, new XmlElement("bacon", "bip", "bip.com"));
+        XmlNode eggs1 = new XmlNode(bar, new XmlElement("eggs"));
+        XmlNode eggs2 = new XmlNode(bar, new XmlElement("eggs"));
 
         assertThat(foo).hasXPath("/foo");
         assertThat(bar).hasXPath("/foo/plop:bar");
@@ -83,17 +81,17 @@ public class XmlNodeTest {
 
     @Test
     public void shouldComputeXPathForNonElementNodes() {
-        XmlNode doc = new XmlNode(new XmlDocumentData());
-        XmlNode docDecl = new XmlNode(new XmlDocDeclData());
-        XmlNode docType = new XmlNode(new XmlDocTypeData("html"));
-        XmlNode foo = new XmlNode(new XmlElementData("foo"));
-        XmlNode fooProcInstr = new XmlNode(foo, new XmlProcInstrData("plop", "toto"));
-        XmlNode bar = new XmlNode(foo, new XmlElementData("bar", "plop", "plop.com"));
-        XmlNode barComment = new XmlNode(bar, new XmlCommentData("plop"));
-        XmlNode eggs = new XmlNode(bar, new XmlElementData("eggs"));
-        XmlNode eggsText = new XmlNode(eggs, new XmlTextData("plop"));
-        XmlNode bacon = new XmlNode(bar, new XmlElementData("bacon", "bip", "bip.com"));
-        XmlNode baconCData = new XmlNode(bacon, new XmlCharData("plop"));
+        XmlNode doc = new XmlNode(new XmlDocument());
+        XmlNode docDecl = new XmlNode(new XmlDocumentDeclaration());
+        XmlNode docType = new XmlNode(new XmlSystemDTD("foo", "foo.dtd"));
+        XmlNode foo = new XmlNode(new XmlElement("foo"));
+        XmlNode fooProcInstr = new XmlNode(foo, new XmlProcessingInstruction("plop", "toto"));
+        XmlNode bar = new XmlNode(foo, new XmlElement("bar", "plop", "plop.com"));
+        XmlNode barComment = new XmlNode(bar, new XmlComment("plop"));
+        XmlNode eggs = new XmlNode(bar, new XmlElement("eggs"));
+        XmlNode eggsText = new XmlNode(eggs, new XmlText("plop"));
+        XmlNode bacon = new XmlNode(bar, new XmlElement("bacon", "bip", "bip.com"));
+        XmlNode baconCData = new XmlNode(bacon, new XmlCData("plop"));
 
         assertThat(doc).hasXPath("");
         assertThat(docDecl).hasXPath(" {Header}");
@@ -114,18 +112,18 @@ public class XmlNodeTest {
 
     @Test
     public void shouldFindChildWithType() {
-        XmlNode doc = new XmlNode(new XmlDocumentData());
-        XmlNode docDecl = new XmlNode(doc, new XmlDocDeclData());
-        XmlNode docType = new XmlNode(doc, new XmlDocTypeData("html"));
-        XmlNode foo = new XmlNode(doc, new XmlElementData("foo"));
-        XmlNode fooProcInstr = new XmlNode(foo, new XmlProcInstrData("plop", "toto"));
-        XmlNode bar = new XmlNode(foo, new XmlElementData("bar", "plop", "plop.com"));
-        XmlNode barComment = new XmlNode(bar, new XmlCommentData("plop"));
-        XmlNode eggs = new XmlNode(bar, new XmlElementData("eggs"));
-        XmlNode eggsText = new XmlNode(eggs, new XmlTextData("plop"));
-        XmlNode bacon = new XmlNode(bar, new XmlElementData("bacon", "bip", "bip.com"));
-        XmlNode baconCData = new XmlNode(bacon, new XmlCharData("plop"));
-        XmlNode baconComment = new XmlNode(bacon, new XmlCommentData("plop"));
+        XmlNode doc = new XmlNode(new XmlDocument());
+        XmlNode docDecl = new XmlNode(doc, new XmlDocumentDeclaration());
+        XmlNode docType = new XmlNode(doc, new XmlSystemDTD("foo", "foo.dtd"));
+        XmlNode foo = new XmlNode(doc, new XmlElement("foo"));
+        XmlNode fooProcInstr = new XmlNode(foo, new XmlProcessingInstruction("plop", "toto"));
+        XmlNode bar = new XmlNode(foo, new XmlElement("bar", "plop", "plop.com"));
+        XmlNode barComment = new XmlNode(bar, new XmlComment("plop"));
+        XmlNode eggs = new XmlNode(bar, new XmlElement("eggs"));
+        XmlNode eggsText = new XmlNode(eggs, new XmlText("plop"));
+        XmlNode bacon = new XmlNode(bar, new XmlElement("bacon", "bip", "bip.com"));
+        XmlNode baconCData = new XmlNode(bacon, new XmlCData("plop"));
+        XmlNode baconComment = new XmlNode(bacon, new XmlComment("plop"));
 
 
         // From root

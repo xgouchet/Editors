@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root xmlns="default.com" xmlns:foo="foo.com">
+    <nons foo="666"/>
+    <withns xmlns:spam="spam.com" spam:foo="42">
+        <spam:child xmlns:eggs="eggs.com" eggs:bar="bacon"/>
+    </withns>
+</root>

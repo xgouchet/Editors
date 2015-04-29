@@ -1,10 +1,10 @@
 package fr.xgouchet.xmleditor.core.xml;
 
+import android.support.annotation.NonNull;
+
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * An Attributed xml data (Element, DocDecl)
@@ -12,7 +12,7 @@ import java.util.Set;
  *
  * @author Xavier Gouchet
  */
-abstract class XmlDataWithAttributes extends XmlData {
+abstract class XmlAttributedContent extends XmlContent {
 
     final Map<String, XmlAttribute> mAttributes = new HashMap<>();
 
@@ -21,7 +21,7 @@ abstract class XmlDataWithAttributes extends XmlData {
      *
      * @param type
      */
-    public XmlDataWithAttributes(final @XmlUtils.XmlNodeType int type) {
+    public XmlAttributedContent(final @XmlUtils.XmlNodeType int type) {
         super(type);
     }
 
@@ -42,7 +42,7 @@ abstract class XmlDataWithAttributes extends XmlData {
     }
 
     public XmlAttribute getAttribute(String qualifiedName) {
-        return null;
+        return mAttributes.get(qualifiedName);
     }
 
     public Collection<XmlAttribute> getAttributes() {
@@ -62,5 +62,11 @@ abstract class XmlDataWithAttributes extends XmlData {
         builder.append("}");
 
         return builder.toString();
+    }
+
+    public void addAttributes(final @NonNull Collection<XmlAttribute> attributes) {
+        for (XmlAttribute attribute : attributes) {
+            addAttribute(attribute);
+        }
     }
 }

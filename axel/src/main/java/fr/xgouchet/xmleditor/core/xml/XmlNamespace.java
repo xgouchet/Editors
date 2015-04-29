@@ -2,18 +2,21 @@ package fr.xgouchet.xmleditor.core.xml;
 
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.util.Log;
 
 /**
  * @author Xavier Gouchet
  */
 public final class XmlNamespace {
 
-    private static final XmlNamespace XMLNS = new XmlNamespace(XmlUtils.PREFIX_XMLNS, "");
+    private static final String TAG = XmlNamespace.class.getSimpleName();
+
+    public static final XmlNamespace XMLNS = new XmlNamespace(XmlUtils.PREFIX_XMLNS, "");
 
     private final String mPrefix;
     private final String mUri;
 
-    XmlNamespace(final @NonNull String prefix, final @NonNull String uri) {
+    XmlNamespace(final @Nullable String prefix, final @NonNull String uri) {
         mPrefix = prefix;
         mUri = uri;
     }
@@ -22,20 +25,27 @@ public final class XmlNamespace {
     public static XmlNamespace from(final @Nullable String prefix, final @Nullable String uri) {
 
         if (XmlUtils.PREFIX_XMLNS.equals(prefix)) {
+            Log.d(TAG, "XMLNS Namespace : [" + prefix + "]->" + uri);
             return XMLNS;
         } else {
-            if ((prefix == null)
-                    || (uri == null)
-                    || (prefix.length() == 0)
+            if ((uri == null)
+                    || ("".equals(prefix))
                     || (uri.length() == 0)) {
+                Log.d(TAG, "Invalid Namespace : [" + prefix + "]->" + uri);
                 return null;
             } else {
-                return new XmlNamespace(prefix.intern(), uri.intern());
+                if (prefix == null) {
+                    Log.d(TAG, "Default Namespace : [" + prefix + "]->" + uri);
+                    return new XmlNamespace(null, uri.intern());
+                } else {
+                    Log.d(TAG, "Namespace : [" + prefix + "]->" + uri);
+                    return new XmlNamespace(prefix.intern(), uri.intern());
+                }
             }
         }
     }
 
-    @NonNull
+    @Nullable
     public String getPrefix() {
         return mPrefix;
     }
@@ -49,24 +59,28 @@ public final class XmlNamespace {
         return this == XMLNS;
     }
 
+    @SuppressWarnings("StringEquality")
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        XmlNamespace that = (XmlNamespace) o;
+        XmlNamespace namespace = (XmlNamespace) o;
 
-        // Strings are interned, so use == instead of equals
-        if (mPrefix != that.mPrefix) return false;
-        if (mUri != that.mUri) return false;
+        if (mPrefix != namespace.mPrefix) return false;
+        return mUri == namespace.mUri;
 
-        return true;
     }
 
     @Override
     public int hashCode() {
-        int result = mPrefix.hashCode();
+        int result = mPrefix == null ? 0 : mPrefix.hashCode();
         result = 31 * result + mUri.hashCode();
         return result;
+    }
+
+    @Override
+    public String toString() {
+        return "XmlNamespace{ [" + mPrefix + "]->" + mUri + '}';
     }
 }

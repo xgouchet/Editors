@@ -5,18 +5,18 @@ import android.support.annotation.NonNull;
 /**
  * @author Xavier Gouchet
  */
-public final class XmlCharData extends XmlDataWithText {
+public final class XmlCData extends XmlBasicContent {
 
-    public XmlCharData() {
+    public XmlCData() {
         this("");
     }
 
-    public XmlCharData(final @NonNull String text) {
+    public XmlCData(final @NonNull String text) {
         super(XmlUtils.XML_CDATA, text);
     }
 
     @Override
     public String toString() {
-        return "XmlCharData{" + getText() + '}';
+        return "<![CDATA[" + getText() + "]]>";
     }
 }

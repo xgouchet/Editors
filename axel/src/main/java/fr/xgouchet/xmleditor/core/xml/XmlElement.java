@@ -9,18 +9,18 @@ import java.util.List;
 /**
  * @author Xavier Gouchet
  */
-public final class XmlElementData extends XmlDataWithAttributes {
+public final class XmlElement extends XmlAttributedContent {
 
     private String mLocalName;
     private XmlNamespace mNamespace;
 
-    public XmlElementData(final @NonNull String localName) {
+    public XmlElement(final @NonNull String localName) {
         this(localName, null, null);
     }
 
-    public XmlElementData(final @NonNull String localName,
-                          final @Nullable String namespacePrefix,
-                          final @Nullable String namespaceUri) {
+    public XmlElement(final @NonNull String localName,
+                      final @Nullable String namespacePrefix,
+                      final @Nullable String namespaceUri) {
         super(XmlUtils.XML_ELEMENT);
         mLocalName = localName;
         mNamespace = XmlNamespace.from(namespacePrefix, namespaceUri);
@@ -46,7 +46,10 @@ public final class XmlElementData extends XmlDataWithAttributes {
 
     @NonNull
     public String getQualifiedName() {
-        return (mNamespace == null) ? mLocalName : (mNamespace.getPrefix() + ':' + mLocalName);
+
+        String prefix = getNamespacePrefix();
+
+        return (prefix == null) ? mLocalName : (prefix + XmlUtils.PREFIX_SEPARATOR + mLocalName);
     }
 
 
@@ -72,8 +75,9 @@ public final class XmlElementData extends XmlDataWithAttributes {
         for (XmlAttribute attribute : getAttributes()) {
             ns = attribute.getNamespace();
 
-            if (XmlUtils.ATTR_XMLNS.equals(attribute.getQualifiedName())
-                    || ((ns != null) && (ns.isXmlns()))) {
+            if (XmlUtils.ATTR_XMLNS.equals(attribute.getQualifiedName())) {
+                declaredNamespaces.add(XmlNamespace.from(null, attribute.getValue()));
+            } else if ((ns != null) && (ns.isXmlns())) {
                 declaredNamespaces.add(XmlNamespace.from(attribute.getName(), attribute.getValue()));
             }
         }
@@ -86,7 +90,7 @@ public final class XmlElementData extends XmlDataWithAttributes {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
 
-        XmlElementData that = (XmlElementData) o;
+        XmlElement that = (XmlElement) o;
 
         if (!mAttributes.equals(that.mAttributes)) return false;
         if (!mLocalName.equals(that.mLocalName)) return false;
@@ -108,6 +112,6 @@ public final class XmlElementData extends XmlDataWithAttributes {
 
     @Override
     public String toString() {
-        return "XmlElementData{" + getQualifiedName() + " [" + mAttributes.size() + " attributes] }";
+        return "<" + getQualifiedName() + "> [" + mAttributes.size() + " attributes]";
     }
 }

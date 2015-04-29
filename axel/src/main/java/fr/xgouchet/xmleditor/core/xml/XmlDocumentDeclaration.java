@@ -4,10 +4,9 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
 /**
- *
  * @author Xavier Gouchet
  */
-public final class XmlDocDeclData extends XmlDataWithAttributes {
+public final class XmlDocumentDeclaration extends XmlAttributedContent {
 
     public static final String ENCODING = "encoding";
     public static final String VERSION = "version";
@@ -18,7 +17,7 @@ public final class XmlDocDeclData extends XmlDataWithAttributes {
     public static final String STANDALONE_NO = "no";
 
 
-    public XmlDocDeclData() {
+    public XmlDocumentDeclaration() {
         super(XmlUtils.XML_DOCUMENT_DECLARATION);
         setVersion(DEFAULT_VERSION);
     }
@@ -70,9 +69,33 @@ public final class XmlDocDeclData extends XmlDataWithAttributes {
         if (attribute == null) {
             return true;
         } else {
-            return attribute.getValue().equals("YES");
+            return attribute.getValue().equalsIgnoreCase(STANDALONE_YES);
         }
     }
 
+    @Override
+    public String toString() {
+        StringBuilder builder = new StringBuilder();
 
+        builder.append("<?xml version=\"");
+        builder.append(getVersion());
+        builder.append("\"");
+
+        String encoding = getEncoding();
+        if (encoding != null) {
+            builder.append(" encoding=\"");
+            builder.append(encoding);
+            builder.append("\"");
+        }
+
+        XmlAttribute standalone = getAttribute(STANDALONE);
+        if (standalone != null) {
+            builder.append(" standalone=\"");
+            builder.append(standalone.getValue());
+            builder.append("\"");
+        }
+
+        builder.append("?>");
+        return builder.toString();
+    }
 }

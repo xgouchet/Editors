@@ -8,11 +8,11 @@ import android.support.annotation.NonNull;
  *
  * @author Xavier Gouchet
  */
-abstract class XmlDataWithText extends XmlData {
+abstract class XmlBasicContent extends XmlContent {
 
     private String mText;
 
-    XmlDataWithText(final @XmlUtils.XmlNodeType int type, final @NonNull String text) {
+    XmlBasicContent(final @XmlUtils.XmlNodeType int type, final @NonNull String text) {
         super(type);
         mText = text;
     }
@@ -29,9 +29,9 @@ abstract class XmlDataWithText extends XmlData {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof XmlDataWithText)) return false;
+        if (!(o instanceof XmlBasicContent)) return false;
 
-        XmlDataWithText that = (XmlDataWithText) o;
+        XmlBasicContent that = (XmlBasicContent) o;
 
         if (that.mType != mType) return false;
 

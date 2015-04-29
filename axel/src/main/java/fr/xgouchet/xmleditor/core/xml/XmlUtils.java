@@ -10,12 +10,17 @@ public class XmlUtils {
     /**
      * XML default Namespace attribute
      */
-    public static final String ATTR_XMLNS= "xmlns";
+    public static final String ATTR_XMLNS = "xmlns";
 
     /**
      * XML Namespace declaration prefix
      */
-    public static final String PREFIX_XMLNS= "xmlns";
+    public static final String PREFIX_XMLNS = "xmlns";
+
+    /**
+     * XML separator between prefix and name
+     */
+    public static final char PREFIX_SEPARATOR = ':';
 
     /**
      * XML Schema Instance Namespace default prefix
@@ -36,6 +41,7 @@ public class XmlUtils {
      * The xml document property : Standalone
      */
     public static final String PROPERTY_XML_STANDALONE = "http://xmlpull.org/v1/doc/properties.html#xmldecl-standalone";
+
 
     @IntDef(value = {XML_DOCUMENT, XML_DOCTYPE, XML_PROCESSING_INSTRUCTION, XML_ELEMENT, XML_CDATA, XML_TEXT, XML_COMMENT, XML_DOCUMENT_DECLARATION})
     public @interface XmlNodeType {

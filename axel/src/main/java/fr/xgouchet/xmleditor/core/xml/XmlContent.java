@@ -17,7 +17,7 @@ package fr.xgouchet.xmleditor.core.xml;
  *
  * @author Xavier Gouchet
  */
-public abstract class XmlData {
+public abstract class XmlContent {
 
     @XmlUtils.XmlNodeType
     final int mType;
@@ -27,7 +27,7 @@ public abstract class XmlData {
      *
      * @param type
      */
-    XmlData(final @XmlUtils.XmlNodeType int type) {
+    XmlContent(final @XmlUtils.XmlNodeType int type) {
         mType = type;
     }
 

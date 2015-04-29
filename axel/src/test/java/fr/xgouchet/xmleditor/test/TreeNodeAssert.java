@@ -143,4 +143,18 @@ public class TreeNodeAssert<T> extends AbstractAssert<TreeNodeAssert<T>, TreeNod
     }
 
 
+    /**
+     * Verify that the actual node has the given number of children
+     *
+     * @return this assertion object
+     */
+    public TreeNodeAssert<T> hasChildrenCount(int count) {
+        isNotNull();
+
+        assertThat(actual.getChildrenCount())
+                .overridingErrorMessage("Expected children count to be <%d> but was <%d>", count, actual.getChildrenCount())
+                .isEqualTo(count);
+
+        return this;
+    }
 }

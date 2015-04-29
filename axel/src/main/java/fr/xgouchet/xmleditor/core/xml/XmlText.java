@@ -5,19 +5,19 @@ import android.support.annotation.NonNull;
 /**
  * @author Xavier Gouchet
  */
-public final class XmlTextData extends XmlDataWithText {
+public final class XmlText extends XmlBasicContent {
 
 
-    public XmlTextData() {
+    public XmlText() {
         this("");
     }
 
-    public XmlTextData(final @NonNull String text) {
+    public XmlText(final @NonNull String text) {
         super(XmlUtils.XML_TEXT, text);
     }
 
     @Override
     public String toString() {
-        return "XmlTextData{" + getText() + '}';
+        return "\"" + getText() + "\"";
     }
 }

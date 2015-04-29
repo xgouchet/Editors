@@ -3,19 +3,19 @@ package fr.xgouchet.xmleditor.core.model;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
-import fr.xgouchet.xmleditor.core.xml.XmlData;
-import fr.xgouchet.xmleditor.core.xml.XmlElementData;
+import fr.xgouchet.xmleditor.core.xml.XmlContent;
+import fr.xgouchet.xmleditor.core.xml.XmlElement;
 import fr.xgouchet.xmleditor.core.xml.XmlUtils;
 
 /**
  * @author Xavier Gouchet
  */
-public class XmlNode extends TreeNode<XmlData> {
+public class XmlNode extends TreeNode<XmlContent> {
 
     /**
      * @param data any non null XML data
      */
-    public XmlNode(final @NonNull XmlData data) {
+    XmlNode(final @NonNull XmlContent data) {
         this(null, data);
     }
 
@@ -23,14 +23,21 @@ public class XmlNode extends TreeNode<XmlData> {
      * @param parent the parent XMLNode
      * @param data   any non null XML data
      */
-    public XmlNode(final @Nullable XmlNode parent, final @NonNull XmlData data) {
+    XmlNode(final @Nullable XmlNode parent, final @NonNull XmlContent data) {
         super(parent, data);
     }
+
 
     @Nullable
     @Override
     public XmlNode getParent() {
         return (XmlNode) super.getParent();
+    }
+
+    @NonNull
+    @Override
+    public XmlNode getChild(int position) {
+        return (XmlNode) super.getChild(position);
     }
 
     /**
@@ -52,29 +59,29 @@ public class XmlNode extends TreeNode<XmlData> {
      */
     @NonNull
     private String getLocalXPath() {
-        XmlData data = getData();
+        XmlContent data = getData();
 
         switch (data.getType()) {
             case XmlUtils.XML_ELEMENT:
-                String local = "/" + ((XmlElementData) data).getQualifiedName();
+                String local = "/" + ((XmlElement) data).getQualifiedName();
                 if (getParent() == null) {
                     return local;
                 } else {
                     int count = 0;
                     int index = 0;
 
-                    for (TreeNode<XmlData> sibling : getParent().getChildren()) {
+                    for (TreeNode<XmlContent> sibling : getParent().getChildren()) {
                         if ((sibling == null)) {
                             continue;
                         }
-                        XmlData siblingData = sibling.getData();
+                        XmlContent siblingData = sibling.getData();
                         if (siblingData.getType() != XmlUtils.XML_ELEMENT) {
                             continue;
                         }
                         if (sibling == this) {
                             index = count;
                         }
-                        if (((XmlElementData) siblingData).getQualifiedName().equals(((XmlElementData) data).getQualifiedName())) {
+                        if (((XmlElement) siblingData).getQualifiedName().equals(((XmlElement) data).getQualifiedName())) {
                             count++;
                         }
                     }
@@ -108,22 +115,27 @@ public class XmlNode extends TreeNode<XmlData> {
         }
 
         XmlNode node, best = null;
-        for (TreeNode<XmlData> child : getChildren()) {
+        for (TreeNode<XmlContent> child : getChildren()) {
 
             node = ((XmlNode) child).findNodeWithType(type);
 
-            if (node == null){
+            if (node == null) {
                 continue;
             }
 
-            if ((best == null) || (node.getDepth() < best.getDepth())){
+            if ((best == null) || (node.getDepth() < best.getDepth())) {
                 best = node;
-                if (best.getDepth() == (getDepth() + 1)){
+                if (best.getDepth() == (getDepth() + 1)) {
                     break;
                 }
             }
         }
 
         return best;
+    }
+
+    @Override
+    public String toString() {
+        return "XmlNode{" + getData() + "}";
     }
 }

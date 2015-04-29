@@ -5,16 +5,16 @@ import android.support.annotation.NonNull;
 /**
  * @author Xavier Gouchet
  */
-public final class XmlProcInstrData extends XmlData {
+public final class XmlProcessingInstruction extends XmlContent {
 
     private String mTarget;
     private String mInstruction;
 
-    public XmlProcInstrData(final @NonNull String target) {
+    public XmlProcessingInstruction(final @NonNull String target) {
         this(target, "");
     }
 
-    public XmlProcInstrData(final @NonNull String target, final @NonNull String instruction) {
+    public XmlProcessingInstruction(final @NonNull String target, final @NonNull String instruction) {
         super(XmlUtils.XML_PROCESSING_INSTRUCTION);
         mTarget = target;
         mInstruction = instruction;
@@ -39,9 +39,9 @@ public final class XmlProcInstrData extends XmlData {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (!(o instanceof XmlProcInstrData)) return false;
+        if (!(o instanceof XmlProcessingInstruction)) return false;
 
-        XmlProcInstrData that = (XmlProcInstrData) o;
+        XmlProcessingInstruction that = (XmlProcessingInstruction) o;
 
         if (!mInstruction.equals(that.mInstruction)) return false;
         if (!mTarget.equals(that.mTarget)) return false;
@@ -58,6 +58,6 @@ public final class XmlProcInstrData extends XmlData {
 
     @Override
     public String toString() {
-        return "XmlProcInstrData{" + mTarget + ' ' + mInstruction + '}';
+        return "<?" + mTarget + ' ' + mInstruction + "?>";
     }
 }

@@ -3,14 +3,19 @@ package fr.xgouchet.xmleditor.core.model;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
-import fr.xgouchet.xmleditor.core.xml.XmlCharData;
-import fr.xgouchet.xmleditor.core.xml.XmlCommentData;
-import fr.xgouchet.xmleditor.core.xml.XmlDocDeclData;
-import fr.xgouchet.xmleditor.core.xml.XmlDocTypeData;
-import fr.xgouchet.xmleditor.core.xml.XmlDocumentData;
-import fr.xgouchet.xmleditor.core.xml.XmlElementData;
-import fr.xgouchet.xmleditor.core.xml.XmlProcInstrData;
-import fr.xgouchet.xmleditor.core.xml.XmlTextData;
+import java.util.Collection;
+
+import fr.xgouchet.xmleditor.core.xml.XmlAttribute;
+import fr.xgouchet.xmleditor.core.xml.XmlCData;
+import fr.xgouchet.xmleditor.core.xml.XmlComment;
+import fr.xgouchet.xmleditor.core.xml.XmlDocument;
+import fr.xgouchet.xmleditor.core.xml.XmlDocumentDeclaration;
+import fr.xgouchet.xmleditor.core.xml.XmlElement;
+import fr.xgouchet.xmleditor.core.xml.XmlInternalDTD;
+import fr.xgouchet.xmleditor.core.xml.XmlProcessingInstruction;
+import fr.xgouchet.xmleditor.core.xml.XmlPublicDTD;
+import fr.xgouchet.xmleditor.core.xml.XmlSystemDTD;
+import fr.xgouchet.xmleditor.core.xml.XmlText;
 import fr.xgouchet.xmleditor.core.xml.XmlUtils;
 
 /**
@@ -22,7 +27,7 @@ public class XmlNodeFactory {
 
     @NonNull
     public static XmlNode createDocument() {
-        return new XmlNode(new XmlDocumentData());
+        return new XmlNode(new XmlDocument());
     }
 
     @NonNull
@@ -52,7 +57,7 @@ public class XmlNodeFactory {
             throw new UnsupportedOperationException("Cannot create DocumentDeclaration on non Document node");
         }
 
-        XmlDocDeclData data = new XmlDocDeclData();
+        XmlDocumentDeclaration data = new XmlDocumentDeclaration();
         if (version != null) {
             data.setVersion(version);
         }
@@ -65,17 +70,45 @@ public class XmlNodeFactory {
             data.setStandalone(standalone);
         }
 
-        return new XmlNode(parent, data);
+        XmlNode docDecl = new XmlNode(data);
+        parent.insertChild(docDecl, 0);
+        return docDecl;
     }
 
     @NonNull
-    public static XmlNode createDocType(final @NonNull XmlNode parent,
-                                        final @NonNull String content) {
+    public static XmlNode createSystemDTD(final @NonNull XmlNode parent,
+                                          final @NonNull String root,
+                                          final @NonNull String location,
+                                          final @Nullable String internalDefinition) {
         if (parent.getData().getType() != XmlUtils.XML_DOCUMENT) {
-            throw new UnsupportedOperationException("Cannot create DocType on non Document node");
+            throw new UnsupportedOperationException("Cannot create DTD on non Document node");
         }
 
-        return new XmlNode(parent, new XmlDocTypeData(content));
+        return new XmlNode(parent, new XmlSystemDTD(root, location, internalDefinition));
+    }
+
+    @NonNull
+    public static XmlNode createPublicDTD(final @NonNull XmlNode parent,
+                                          final @NonNull String root,
+                                          final @NonNull String name,
+                                          final @NonNull String location,
+                                          final @Nullable String internalDefinition) {
+        if (parent.getData().getType() != XmlUtils.XML_DOCUMENT) {
+            throw new UnsupportedOperationException("Cannot create DTD on non Document node");
+        }
+
+        return new XmlNode(parent, new XmlPublicDTD(root, name, location, internalDefinition));
+    }
+
+    @NonNull
+    public static XmlNode createInternalDTD(final @NonNull XmlNode parent,
+                                            final @NonNull String root,
+                                            final @NonNull String definition) {
+        if (parent.getData().getType() != XmlUtils.XML_DOCUMENT) {
+            throw new UnsupportedOperationException("Cannot create DTD on non Document node");
+        }
+
+        return new XmlNode(parent, new XmlInternalDTD(root, definition));
     }
 
     @NonNull
@@ -85,7 +118,7 @@ public class XmlNodeFactory {
             throw new UnsupportedOperationException("Cannot create Text on non Element node");
         }
 
-        return new XmlNode(parent, new XmlTextData(text));
+        return new XmlNode(parent, new XmlText(text));
     }
 
     @NonNull
@@ -95,7 +128,7 @@ public class XmlNodeFactory {
             throw new UnsupportedOperationException("Cannot create CData on non Element node");
         }
 
-        return new XmlNode(parent, new XmlCharData(text));
+        return new XmlNode(parent, new XmlCData(text));
     }
 
     @NonNull
@@ -106,13 +139,20 @@ public class XmlNodeFactory {
             throw new UnsupportedOperationException("Cannot create Comment on non Document or Element node");
         }
 
-        return new XmlNode(parent, new XmlCommentData(comment));
+        return new XmlNode(parent, new XmlComment(comment));
     }
 
     @NonNull
     public static XmlNode createElement(final @NonNull XmlNode parent,
                                         final @NonNull String localName) {
-        return createElement(parent, localName, null, null);
+        return createElement(parent, localName, null, null, null);
+    }
+
+    @NonNull
+    public static XmlNode createElement(final @NonNull XmlNode parent,
+                                        final @NonNull String localName,
+                                        final @Nullable Collection<XmlAttribute> attributes) {
+        return createElement(parent, localName, null, null, attributes);
     }
 
     @NonNull
@@ -120,29 +160,43 @@ public class XmlNodeFactory {
                                         final @NonNull String localName,
                                         final @Nullable String namespacePrefix,
                                         final @Nullable String namespaceUri) {
+
+        return createElement(parent, localName, namespacePrefix, namespaceUri, null);
+    }
+
+    @NonNull
+    public static XmlNode createElement(final @NonNull XmlNode parent,
+                                        final @NonNull String localName,
+                                        final @Nullable String namespacePrefix,
+                                        final @Nullable String namespaceUri,
+                                        final @Nullable Collection<XmlAttribute> attributes) {
         if ((parent.getData().getType() != XmlUtils.XML_ELEMENT)
                 && (parent.getData().getType() != XmlUtils.XML_DOCUMENT)) {
             throw new UnsupportedOperationException("Cannot create Comment on non Document or Element node");
         }
 
-        return new XmlNode(parent, new XmlElementData(localName, namespacePrefix, namespaceUri));
+        XmlElement element = new XmlElement(localName, namespacePrefix, namespaceUri);
+        if (attributes != null) {
+            element.addAttributes(attributes);
+        }
+        return new XmlNode(parent, element);
     }
 
     @NonNull
     public static XmlNode createProcessingInstruction(final @NonNull XmlNode parent,
-                                                      final @NonNull String target){
+                                                      final @NonNull String target) {
         return createProcessingInstruction(parent, target, "");
     }
 
     @NonNull
     public static XmlNode createProcessingInstruction(final @NonNull XmlNode parent,
-                                                   final @NonNull String target,
-                                                   final @NonNull String instruction){
+                                                      final @NonNull String target,
+                                                      final @NonNull String instruction) {
         if ((parent.getData().getType() != XmlUtils.XML_ELEMENT)
                 && (parent.getData().getType() != XmlUtils.XML_DOCUMENT)) {
             throw new UnsupportedOperationException("Cannot create Comment on non Document or Element node");
         }
 
-        return new XmlNode(new XmlProcInstrData(target, instruction));
+        return new XmlNode(parent, new XmlProcessingInstruction(target, instruction));
     }
 }
