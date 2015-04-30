@@ -1,9 +1,6 @@
 package fr.xgouchet.xmleditor.core.actions;
 
-import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-
-import org.xmlpull.v1.XmlPullParserException;
 
 import java.io.InputStream;
 
@@ -16,14 +13,10 @@ import fr.xgouchet.xmleditor.core.utils.InputStreamProvider;
  *
  * @author Xavier Gouchet
  */
-public class XmlLoader extends AsyncAction<InputStreamProvider<?>, XmlNode> {
+public class LoadXmlAction implements AsyncAction<InputStreamProvider<?>, XmlNode> {
 
     private static final int DETECTION_BUFFER_MAX_SIZE = 512;
 
-    protected XmlLoader(final @Nullable InputStreamProvider<?> input,
-                        final @NonNull AsyncActionListener<XmlNode> listener) {
-        super(input, listener);
-    }
 
     @Nullable
     @Override
@@ -43,6 +36,9 @@ public class XmlLoader extends AsyncAction<InputStreamProvider<?>, XmlNode> {
 
         // TODO detect encoding
         String encoding = null;
+        // ...
+
+        // reset input stream
         if (input.markSupported()) {
             input.reset();
         } else {

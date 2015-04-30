@@ -25,7 +25,8 @@ public class XmlNamespaceTest {
         assertThat(ns).isNull();
 
         ns = XmlNamespace.from(null, "http://uri.com");
-        assertThat(ns).isNull();
+        assertThat(ns.getPrefix()).isNull();
+        assertThat(ns.getUri()).isEqualTo("http://uri.com");
 
         ns = XmlNamespace.from("", "http://uri.com");
         assertThat(ns).isNull();

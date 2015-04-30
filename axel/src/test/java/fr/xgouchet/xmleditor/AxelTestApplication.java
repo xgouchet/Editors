@@ -2,8 +2,10 @@ package fr.xgouchet.xmleditor;
 
 import android.app.Application;
 
+import org.robolectric.Robolectric;
 import org.robolectric.TestLifecycleApplication;
 import org.robolectric.shadows.ShadowLog;
+import org.robolectric.util.Scheduler;
 
 import java.lang.reflect.Method;
 import java.util.Arrays;
@@ -19,6 +21,7 @@ public class AxelTestApplication extends AxelApplication implements TestLifecycl
     @Override
     public void beforeTest(Method method) {
         ShadowLog.stream = System.out;
+        Robolectric.getForegroundThreadScheduler().reset();
     }
 
     @Override
