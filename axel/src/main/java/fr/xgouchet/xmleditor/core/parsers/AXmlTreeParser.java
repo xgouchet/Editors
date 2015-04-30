@@ -128,7 +128,6 @@ public abstract class AXmlTreeParser {
      * Ends the element on top of the stack
      */
     void endElement() {
-        // TODO maybe check that we pop the correct element ?
         XmlNode popped = mStack.pop();
 
         // Remove declared namespace
@@ -193,9 +192,6 @@ public abstract class AXmlTreeParser {
     void addComment(final @NonNull String comment) {
         XmlNodeFactory.createComment(mStack.peek(), comment);
     }
-
-
-    // TODO make sure we don't create more than one DTD
 
     /**
      * Adds a SYSTEM DTD
