@@ -85,6 +85,6 @@ public class XmlEditor {
      * @param output the output stream to write into
      */
     public void saveDocument(final @NonNull ByteArrayOutputStream output) {
-        
+
     }
 }

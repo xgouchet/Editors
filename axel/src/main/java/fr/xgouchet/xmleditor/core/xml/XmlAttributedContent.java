@@ -1,6 +1,7 @@
 package fr.xgouchet.xmleditor.core.xml;
 
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -36,15 +37,37 @@ abstract class XmlAttributedContent extends XmlContent {
         mAttributes.put(key, attribute);
     }
 
+    /**
+     * Removes an attribute from this node.
+     *
+     * @param attribute the attribute to remove
+     */
     public void removeAttribute(XmlAttribute attribute) {
         String key = attribute.getQualifiedName();
         mAttributes.remove(key);
     }
 
-    public XmlAttribute getAttribute(String qualifiedName) {
+    /**
+     * @param qualifiedName the qualified name of the attribute
+     * @return the attribute object, or null if no matching attribute is found
+     */
+    @Nullable
+    public XmlAttribute getAttribute(final @NonNull String qualifiedName) {
         return mAttributes.get(qualifiedName);
     }
 
+    /**
+     * @param qualifiedName the qualified name of the attribute
+     * @return if a matching attribute is present on this node
+     */
+    public boolean hasAttribute(final @NonNull String qualifiedName) {
+        return mAttributes.containsKey(qualifiedName);
+    }
+
+    /**
+     * @return the collection of attributes on this node
+     */
+    @NonNull
     public Collection<XmlAttribute> getAttributes() {
         return mAttributes.values();
     }

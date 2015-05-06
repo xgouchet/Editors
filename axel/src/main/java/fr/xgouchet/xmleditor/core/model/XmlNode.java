@@ -110,7 +110,7 @@ public class XmlNode extends TreeNode<XmlContent> {
     @Nullable
     public XmlNode findNodeWithType(final @XmlUtils.XmlNodeType int type) {
         // easy
-        if (type == getData().getType()) {
+        if (type == getDataType()) {
             return this;
         }
 
@@ -132,6 +132,13 @@ public class XmlNode extends TreeNode<XmlContent> {
         }
 
         return best;
+    }
+
+    /**
+     * @return the Xml data type of this node
+     */
+    public int getDataType() {
+        return getData().getType();
     }
 
     @Override

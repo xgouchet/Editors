@@ -9,21 +9,13 @@ import android.support.annotation.Nullable;
 public class XmlExternalDTD extends XmlDocTypeDeclaration {
 
     private final String mLocation;
-    private final String mInternal;
-
-    public XmlExternalDTD(final @Type String type,
-                          final @NonNull String rootElement,
-                          final @NonNull String location) {
-        this(type, rootElement, location, null);
-    }
 
     public XmlExternalDTD(final @Type String type,
                           final @NonNull String rootElement,
                           final @NonNull String location,
-                          final @Nullable String internal) {
-        super(type, rootElement);
+                          final @Nullable String internalDefinition) {
+        super(type, rootElement, internalDefinition);
         mLocation = location;
-        mInternal = internal;
     }
 
     @NonNull
@@ -31,8 +23,4 @@ public class XmlExternalDTD extends XmlDocTypeDeclaration {
         return mLocation;
     }
 
-    @Nullable
-    public String getInternal() {
-        return mInternal;
-    }
 }

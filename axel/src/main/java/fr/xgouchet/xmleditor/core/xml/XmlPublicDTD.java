@@ -26,8 +26,8 @@ public final class XmlPublicDTD extends XmlExternalDTD {
     public XmlPublicDTD(final @NonNull String rootElement,
                         final @NonNull String name,
                         final @NonNull String location,
-                        final @Nullable String internal) {
-        super(XmlDocTypeDeclaration.PUBLIC, rootElement, location, internal);
+                        final @Nullable String internalDefinition) {
+        super(PUBLIC, rootElement, location, internalDefinition);
         mName = name;
         // TODO parse name : "PREFIX//OWNER//DESCRIPTION WITH SPACES//ISO_639_LANG"
         // eg : "-//W3C//DTD HTML 4.0 Transitional//EN"

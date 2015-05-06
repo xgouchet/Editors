@@ -10,13 +10,13 @@ public final class XmlSystemDTD extends XmlExternalDTD {
 
     public XmlSystemDTD(final @NonNull String rootElement,
                         final @NonNull String location) {
-        super(SYSTEM, rootElement, location);
+        this(rootElement, location, null);
     }
 
     public XmlSystemDTD(final @NonNull String rootElement,
                         final @NonNull String location,
-                        final @Nullable String internal) {
-        super(SYSTEM, rootElement, location, internal);
+                        final @Nullable String internalDefinition) {
+        super(SYSTEM, rootElement, location, internalDefinition);
     }
 
     @Override

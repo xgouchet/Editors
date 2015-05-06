@@ -7,21 +7,15 @@ import android.support.annotation.NonNull;
  */
 public class XmlInternalDTD extends XmlDocTypeDeclaration {
 
-    private final String mDefinition;
 
     public XmlInternalDTD(final @NonNull String rootElement,
-                          final @NonNull String definition) {
-        super(INTERNAL, rootElement);
-        mDefinition = definition;
-    }
-
-    public String getDefinition() {
-        return mDefinition;
+                          final @NonNull String internalDefinition) {
+        super(INTERNAL, rootElement, internalDefinition);
     }
 
     @Override
     public String toString() {
         return "<!DOCTYPE " + getRootElement() +
-                " [" + mDefinition + "]>";
+                " [" + getInternalDefinition() + "]>";
     }
 }

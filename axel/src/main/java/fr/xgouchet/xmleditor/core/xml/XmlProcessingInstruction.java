@@ -10,30 +10,20 @@ public final class XmlProcessingInstruction extends XmlContent {
     private String mTarget;
     private String mInstruction;
 
-    public XmlProcessingInstruction(final @NonNull String target) {
-        this(target, "");
-    }
-
     public XmlProcessingInstruction(final @NonNull String target, final @NonNull String instruction) {
         super(XmlUtils.XML_PROCESSING_INSTRUCTION);
         mTarget = target;
         mInstruction = instruction;
     }
 
+    @NonNull
     public String getTarget() {
         return mTarget;
     }
 
+    @NonNull
     public String getInstruction() {
         return mInstruction;
-    }
-
-    public void setTarget(final @NonNull String target) {
-        mTarget = target;
-    }
-
-    public void setInstruction(final @NonNull String instruction) {
-        mInstruction = instruction;
     }
 
     @Override

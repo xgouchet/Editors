@@ -53,7 +53,7 @@ public class XmlNodeFactory {
                                                     final @Nullable String version,
                                                     final @Nullable String encoding,
                                                     final @Nullable Boolean standalone) {
-        if (parent.getData().getType() != XmlUtils.XML_DOCUMENT) {
+        if (parent.getDataType() != XmlUtils.XML_DOCUMENT) {
             throw new UnsupportedOperationException("Cannot create DocumentDeclaration on non Document node");
         }
 
@@ -80,7 +80,7 @@ public class XmlNodeFactory {
                                           final @NonNull String root,
                                           final @NonNull String location,
                                           final @Nullable String internalDefinition) {
-        if (parent.getData().getType() != XmlUtils.XML_DOCUMENT) {
+        if (parent.getDataType() != XmlUtils.XML_DOCUMENT) {
             throw new UnsupportedOperationException("Cannot create DTD on non Document node");
         }
 
@@ -93,7 +93,7 @@ public class XmlNodeFactory {
                                           final @NonNull String name,
                                           final @NonNull String location,
                                           final @Nullable String internalDefinition) {
-        if (parent.getData().getType() != XmlUtils.XML_DOCUMENT) {
+        if (parent.getDataType() != XmlUtils.XML_DOCUMENT) {
             throw new UnsupportedOperationException("Cannot create DTD on non Document node");
         }
 
@@ -104,7 +104,7 @@ public class XmlNodeFactory {
     public static XmlNode createInternalDTD(final @NonNull XmlNode parent,
                                             final @NonNull String root,
                                             final @NonNull String definition) {
-        if (parent.getData().getType() != XmlUtils.XML_DOCUMENT) {
+        if (parent.getDataType() != XmlUtils.XML_DOCUMENT) {
             throw new UnsupportedOperationException("Cannot create DTD on non Document node");
         }
 
@@ -114,7 +114,7 @@ public class XmlNodeFactory {
     @NonNull
     public static XmlNode createText(final @NonNull XmlNode parent,
                                      final @NonNull String text) {
-        if (parent.getData().getType() != XmlUtils.XML_ELEMENT) {
+        if (parent.getDataType() != XmlUtils.XML_ELEMENT) {
             throw new UnsupportedOperationException("Cannot create Text on non Element node");
         }
 
@@ -124,7 +124,7 @@ public class XmlNodeFactory {
     @NonNull
     public static XmlNode createCData(final @NonNull XmlNode parent,
                                       final @NonNull String text) {
-        if (parent.getData().getType() != XmlUtils.XML_ELEMENT) {
+        if (parent.getDataType() != XmlUtils.XML_ELEMENT) {
             throw new UnsupportedOperationException("Cannot create CData on non Element node");
         }
 
@@ -134,8 +134,8 @@ public class XmlNodeFactory {
     @NonNull
     public static XmlNode createComment(final @NonNull XmlNode parent,
                                         final @NonNull String comment) {
-        if ((parent.getData().getType() != XmlUtils.XML_ELEMENT)
-                && (parent.getData().getType() != XmlUtils.XML_DOCUMENT)) {
+        if ((parent.getDataType() != XmlUtils.XML_ELEMENT)
+                && (parent.getDataType() != XmlUtils.XML_DOCUMENT)) {
             throw new UnsupportedOperationException("Cannot create Comment on non Document or Element node");
         }
 
@@ -170,8 +170,8 @@ public class XmlNodeFactory {
                                         final @Nullable String namespacePrefix,
                                         final @Nullable String namespaceUri,
                                         final @Nullable Collection<XmlAttribute> attributes) {
-        if ((parent.getData().getType() != XmlUtils.XML_ELEMENT)
-                && (parent.getData().getType() != XmlUtils.XML_DOCUMENT)) {
+        if ((parent.getDataType() != XmlUtils.XML_ELEMENT)
+                && (parent.getDataType() != XmlUtils.XML_DOCUMENT)) {
             throw new UnsupportedOperationException("Cannot create Comment on non Document or Element node");
         }
 
@@ -192,8 +192,8 @@ public class XmlNodeFactory {
     public static XmlNode createProcessingInstruction(final @NonNull XmlNode parent,
                                                       final @NonNull String target,
                                                       final @NonNull String instruction) {
-        if ((parent.getData().getType() != XmlUtils.XML_ELEMENT)
-                && (parent.getData().getType() != XmlUtils.XML_DOCUMENT)) {
+        if ((parent.getDataType() != XmlUtils.XML_ELEMENT)
+                && (parent.getDataType() != XmlUtils.XML_DOCUMENT)) {
             throw new UnsupportedOperationException("Cannot create Comment on non Document or Element node");
         }
 

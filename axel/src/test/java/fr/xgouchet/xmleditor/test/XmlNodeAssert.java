@@ -181,10 +181,10 @@ public class XmlNodeAssert extends AbstractAssert<XmlNodeAssert, XmlNode> {
     public XmlNodeAssert hasType(@XmlUtils.XmlNodeType int type) {
         isNotNull();
 
-        assertThat(actual.getData().getType())
+        assertThat(actual.getDataType())
                 .overridingErrorMessage("Expecting node type to be <%s> but was <%s>",
                         XmlUtils.getTypeName(type),
-                        XmlUtils.getTypeName(actual.getData().getType()))
+                        XmlUtils.getTypeName(actual.getDataType()))
                 .isEqualTo(type);
 
         return this;
@@ -413,8 +413,8 @@ public class XmlNodeAssert extends AbstractAssert<XmlNodeAssert, XmlNode> {
                 .overridingErrorMessage("Expected DTD location to be <%s> but was <%s>", location, systemDTD.getLocation())
                 .isEqualTo(location);
 
-        assertThat(systemDTD.getInternal())
-                .overridingErrorMessage("Expected DTD internal definition to be <%s> but was <%s>", internal, systemDTD.getInternal())
+        assertThat(systemDTD.getInternalDefinition())
+                .overridingErrorMessage("Expected DTD internal definition to be <%s> but was <%s>", internal, systemDTD.getInternalDefinition())
                 .isEqualTo(internal);
 
         return this;
@@ -450,8 +450,8 @@ public class XmlNodeAssert extends AbstractAssert<XmlNodeAssert, XmlNode> {
                 .overridingErrorMessage("Expected DTD location to be <%s> but was <%s>", location, publicDTD.getLocation())
                 .isEqualTo(location);
 
-        assertThat(publicDTD.getInternal())
-                .overridingErrorMessage("Expected DTD internal definition to be <%s> but was <%s>", internal, publicDTD.getInternal())
+        assertThat(publicDTD.getInternalDefinition())
+                .overridingErrorMessage("Expected DTD internal definition to be <%s> but was <%s>", internal, publicDTD.getInternalDefinition())
                 .isEqualTo(internal);
 
         return this;
@@ -479,8 +479,8 @@ public class XmlNodeAssert extends AbstractAssert<XmlNodeAssert, XmlNode> {
                 .overridingErrorMessage("Expected DTD root to be <%s> but was <%s>", root, internalDTD.getRootElement())
                 .isEqualTo(root);
 
-        assertThat(internalDTD.getDefinition())
-                .overridingErrorMessage("Expected DTD name to be <%s> but was <%s>", definition, internalDTD.getDefinition())
+        assertThat(internalDTD.getInternalDefinition())
+                .overridingErrorMessage("Expected DTD name to be <%s> but was <%s>", definition, internalDTD.getInternalDefinition())
                 .isEqualTo(definition);
 
         return this;

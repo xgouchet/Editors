@@ -18,8 +18,35 @@ public final class XmlDocumentDeclaration extends XmlAttributedContent {
 
 
     public XmlDocumentDeclaration() {
+        this(null, null, null);
+    }
+
+    public XmlDocumentDeclaration(final @Nullable String version) {
+        this(version, null, null);
+    }
+
+    public XmlDocumentDeclaration(final @Nullable String version,
+                                  final @Nullable String encoding) {
+        this(version, encoding, null);
+    }
+
+    public XmlDocumentDeclaration(final @Nullable String version,
+                                  final @Nullable String encoding,
+                                  final @Nullable Boolean standalone) {
         super(XmlUtils.XML_DOCUMENT_DECLARATION);
-        setVersion(DEFAULT_VERSION);
+        if (version == null) {
+            setVersion(DEFAULT_VERSION);
+        } else {
+            setVersion(version);
+        }
+
+        if (encoding != null) {
+            setEncoding(encoding);
+        }
+
+        if (standalone != null) {
+            setStandalone(standalone);
+        }
     }
 
     @Override
@@ -81,17 +108,15 @@ public final class XmlDocumentDeclaration extends XmlAttributedContent {
         builder.append(getVersion());
         builder.append("\"");
 
-        String encoding = getEncoding();
-        if (encoding != null) {
+        if (hasAttribute(ENCODING)) {
             builder.append(" encoding=\"");
-            builder.append(encoding);
+            builder.append(getEncoding());
             builder.append("\"");
         }
 
-        XmlAttribute standalone = getAttribute(STANDALONE);
-        if (standalone != null) {
+        if (hasAttribute(STANDALONE)) {
             builder.append(" standalone=\"");
-            builder.append(standalone.getValue());
+            builder.append(isStandalone() ? STANDALONE_YES : STANDALONE_NO);
             builder.append("\"");
         }
 

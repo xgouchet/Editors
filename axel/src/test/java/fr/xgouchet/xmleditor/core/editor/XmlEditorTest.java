@@ -1,6 +1,7 @@
 package fr.xgouchet.xmleditor.core.editor;
 
 import org.apache.maven.artifact.ant.shaded.StringOutputStream;
+import org.assertj.core.api.Assertions;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -13,6 +14,7 @@ import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.UnsupportedEncodingException;
 
 import fr.xgouchet.xmleditor.AxelTestApplication;
 import fr.xgouchet.xmleditor.BuildConfig;
@@ -84,10 +86,22 @@ public class XmlEditorTest {
     }
 
     @Test
-    public void shouldSaveDocument() throws FileNotFoundException, InterruptedException {
+    public void shouldSaveDocument() throws FileNotFoundException, InterruptedException, UnsupportedEncodingException {
         shouldLoadXmlFromInputStream();
 
         ByteArrayOutputStream output = new ByteArrayOutputStream();
         mEditor.saveDocument(output);
+        String string = new String(output.toByteArray(), "UTF-8");
+
+        Assertions.assertThat(string)
+                .isEqualTo("<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
+                        "<!--Test-->\n" +
+                        "<root>\n" +
+                        "  <div class=\"foo\">\n" +
+                        "    Hello World\n" +
+                        "  </div>\n" +
+                        "  <?php echo('!');?>\n" +
+                        "</root>\n");
+
     }
 }
