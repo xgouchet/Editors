@@ -7,9 +7,6 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.Log;
 
-import java.lang.ref.WeakReference;
-import java.util.Queue;
-import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
@@ -76,7 +73,7 @@ public class ActionQueueExecutor {
         private Exception mException;
 
         private AsyncActionRunnable(final @NonNull AsyncAction<I, O> action,
-                                    final @Nullable I input,
+                                    final @NonNull I input,
                                     final @NonNull AsyncActionListener<O> listener,
                                     final @NonNull Handler handler) {
             mAction = action;
@@ -91,10 +88,10 @@ public class ActionQueueExecutor {
             Log.d(TAG, "Perform action " + mAction);
             try {
                 mOutput = mAction.performAction(mInput);
-                Log.d(TAG, "Action successfull : " + mInput +" -> " + mOutput);
+                Log.d(TAG, "Action successfull : " + mInput + " -> " + mOutput);
             } catch (Exception e) {
                 mException = e;
-                Log.w(TAG, "Action failed : " + mInput +" -> " + mException);
+                Log.w(TAG, "Action failed : " + mInput + " -> " + mException);
             }
 
             // notify target

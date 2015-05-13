@@ -2,7 +2,6 @@ package fr.xgouchet.xmleditor.core.actions;
 
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.support.v4.util.Pair;
 
 import java.io.IOException;
 import java.io.OutputStream;
@@ -31,23 +30,28 @@ import fr.xgouchet.xmleditor.core.xml.XmlUtils;
  *
  * @author Xavier Gouchet
  */
-public class SaveXmlAction implements AsyncAction<Pair<XmlNode, ? extends OutputStream>, Void> {
+public class SaveXmlAction implements AsyncAction<SaveXmlAction.Input, Void> {
 
     public static final String INDENTATION = "  ";
 
+    public static class Input {
+        final XmlNode mNode;
+        final OutputStream mOutputStream;
+
+        public Input(final @NonNull XmlNode node, final @NonNull OutputStream outputStream) {
+            mNode = node;
+            mOutputStream = outputStream;
+        }
+    }
+
     @Nullable
     @Override
-    public Void performAction(@Nullable Pair<XmlNode, ? extends OutputStream> input) throws Exception {
-        if (input == null){
-            return null;
-        }
+    public Void performAction(final @NonNull Input input) throws Exception {
 
-        XmlNode document = input.first;
-        OutputStream output = input.second;
+        WriterXmlVisitor visitor = new WriterXmlVisitor(input.mOutputStream);
 
-        WriterXmlVisitor visitor = new WriterXmlVisitor(output);
-
-        visitor.visit(document);
+        
+        visitor.visit(input.mNode);
         visitor.close();
 
         return null;
@@ -117,7 +121,7 @@ public class SaveXmlAction implements AsyncAction<Pair<XmlNode, ? extends Output
          * @param pi the processing instruction to write
          * @throws IOException
          */
-        private void writeProcessingInstruction(XmlProcessingInstruction pi) throws IOException{
+        private void writeProcessingInstruction(XmlProcessingInstruction pi) throws IOException {
             mWriter.write("<?");
             mWriter.write(pi.getTarget());
             mWriter.write(" ");

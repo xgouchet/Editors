@@ -1,6 +1,5 @@
 package fr.xgouchet.xmleditor.core.editor;
 
-import org.apache.maven.artifact.ant.shaded.StringOutputStream;
 import org.assertj.core.api.Assertions;
 import org.junit.After;
 import org.junit.Before;
@@ -10,7 +9,6 @@ import org.robolectric.Robolectric;
 import org.robolectric.RobolectricGradleTestRunner;
 import org.robolectric.annotation.Config;
 
-import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -91,17 +89,14 @@ public class XmlEditorTest {
 
         ByteArrayOutputStream output = new ByteArrayOutputStream();
         mEditor.saveDocument(output);
-        String string = new String(output.toByteArray(), "UTF-8");
 
+        Thread.sleep(200);
+        Robolectric.getForegroundThreadScheduler().runOneTask();
+
+        String string = new String(output.toByteArray(), "UTF-8");
         Assertions.assertThat(string)
                 .isEqualTo("<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
-                        "<!--Test-->\n" +
-                        "<root>\n" +
-                        "  <div class=\"foo\">\n" +
-                        "    Hello World\n" +
-                        "  </div>\n" +
-                        "  <?php echo('!');?>\n" +
-                        "</root>\n");
+                        "<root/>\n");
 
     }
 }

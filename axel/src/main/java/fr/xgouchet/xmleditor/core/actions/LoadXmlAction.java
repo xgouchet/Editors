@@ -1,5 +1,6 @@
 package fr.xgouchet.xmleditor.core.actions;
 
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
 import java.io.InputStream;
@@ -20,12 +21,8 @@ public class LoadXmlAction implements AsyncAction<InputStreamProvider<?>, XmlNod
 
     @Nullable
     @Override
-    public XmlNode performAction(final @Nullable InputStreamProvider<?> provider)
+    public XmlNode performAction(final @NonNull InputStreamProvider<?> provider)
             throws Exception {
-
-        if (provider == null) {
-            throw new IllegalArgumentException("Unexpected null InputStreamProvider");
-        }
 
         InputStream input = provider.provideInputStream();
 

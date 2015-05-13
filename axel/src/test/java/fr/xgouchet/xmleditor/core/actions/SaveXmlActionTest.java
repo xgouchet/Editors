@@ -1,13 +1,16 @@
 package fr.xgouchet.xmleditor.core.actions;
 
-import android.support.v4.util.Pair;
-
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.robolectric.RobolectricGradleTestRunner;
+import org.robolectric.annotation.Config;
 
 import java.io.ByteArrayOutputStream;
 import java.util.Collections;
 
+import fr.xgouchet.xmleditor.AxelTestApplication;
+import fr.xgouchet.xmleditor.BuildConfig;
 import fr.xgouchet.xmleditor.core.model.XmlNode;
 import fr.xgouchet.xmleditor.core.model.XmlNodeFactory;
 import fr.xgouchet.xmleditor.core.xml.XmlAttribute;
@@ -18,6 +21,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * @author Xavier Gouchet
  */
+@RunWith(RobolectricGradleTestRunner.class)
+@Config(constants = BuildConfig.class, emulateSdk = 18, application = AxelTestApplication.class, manifest = "kamoulox/AndroidManifest.xml")
 public class SaveXmlActionTest {
 
     private SaveXmlAction mAction;
@@ -40,7 +45,7 @@ public class SaveXmlActionTest {
 
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 
-        mAction.performAction(new Pair<>(doc, outputStream));
+        mAction.performAction(new SaveXmlAction.Input(doc, outputStream));
 
         String string = new String(outputStream.toByteArray(), "UTF-8");
         assertThat(string)

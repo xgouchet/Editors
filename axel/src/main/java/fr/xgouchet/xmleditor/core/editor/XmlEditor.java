@@ -8,6 +8,7 @@ import java.io.ByteArrayOutputStream;
 import fr.xgouchet.xmleditor.core.actions.ActionQueueExecutor;
 import fr.xgouchet.xmleditor.core.actions.AsyncActionListener;
 import fr.xgouchet.xmleditor.core.actions.LoadXmlAction;
+import fr.xgouchet.xmleditor.core.actions.SaveXmlAction;
 import fr.xgouchet.xmleditor.core.model.XmlNode;
 import fr.xgouchet.xmleditor.core.model.XmlNodeFactory;
 import fr.xgouchet.xmleditor.core.utils.InputStreamProvider;
@@ -85,6 +86,23 @@ public class XmlEditor {
      * @param output the output stream to write into
      */
     public void saveDocument(final @NonNull ByteArrayOutputStream output) {
+        SaveXmlAction saveAction = new SaveXmlAction();
 
+        SaveXmlAction.Input input = new SaveXmlAction.Input(mDocument, output);
+
+        // TODO block all operations while this is performing
+        AsyncActionListener<Void> listener = new AsyncActionListener<Void>() {
+            @Override
+            public void onActionPerformed(@Nullable Void output) {
+                // TODO notify listener that the doc has been saved
+            }
+
+            @Override
+            public void onActionFailed(Exception e) {
+                // TODO notify listener that an error occurred
+            }
+        };
+
+        mActionQueueExecutor.queueAction(saveAction, input, listener);
     }
 }
